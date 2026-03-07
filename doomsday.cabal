@@ -63,6 +63,7 @@ library
       Data.Time.Doomsday
       Data.Time.Doomsday.Year
       Data.Time.Doomsday.Month
+      Data.Time.Doomsday.DayOfWeek
 
     -- Modules included in this library but not exported.
     -- other-modules:

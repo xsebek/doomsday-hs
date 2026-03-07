@@ -18,6 +18,7 @@ tests :: TestTree
 tests = testGroup "Unit tests"
   [ isLeapYearTests
   , monthTests
+  , dayOfWeekTests
   ]
 
 isLeapYearTests :: TestTree
@@ -51,7 +52,17 @@ monthTests = testGroup "Month tests"
   timeMonth :: Time.MonthOfYear -> Time.Month
   timeMonth = Time.YearMonth 0
   timeShow :: Time.Month -> String
-  timeShow m = Time.formatTime Time.defaultTimeLocale "%B" m 
+  timeShow = Time.formatTime Time.defaultTimeLocale "%B"
+
+dayOfWeekTests :: TestTree
+dayOfWeekTests = testGroup "Day of Week tests" $
+  [ testCase "Numbering weekdays from Sunday" $ do
+    fromEnum <$> daysOfWeek @?= [0..6]
+    show <$> daysOfWeek @?= timeShow <$> [Time.Sunday .. Time.Saturday]
+  ]
+ where
+  timeShow :: Time.DayOfWeek -> String
+  timeShow = Time.formatTime Time.defaultTimeLocale "%A"
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances
