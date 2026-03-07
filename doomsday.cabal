@@ -59,7 +59,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  MyLib
+    exposed-modules:  Data.Time.Doomsday
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -125,4 +125,9 @@ test-suite doomsday-test
     -- Test dependencies.
     build-depends:
         base ^>=4.22.0.0,
+        QuickCheck,
+        time,
+        tasty,
+        tasty-hunit,
+        tasty-quickcheck,
         doomsday
