@@ -8,6 +8,8 @@ import Data.Time.Calendar.Month qualified as Time
 import Test.Tasty.QuickCheck
 import Data.Function ((&))
 import Control.Monad (forM_)
+import qualified Data.Time.Calendar.MonthDay as Time
+import Data.Enum (enumerate)
 
 main :: IO ()
 main = defaultMain tests
@@ -33,9 +35,15 @@ isLeapYearTests = testGroup "Leap year"
 
 monthTests :: TestTree
 monthTests = testGroup "Month tests"
-  [ testCase "Numbering months from 1" $ fromEnum <$> allMonths @?= timeAllMonths
-  , testCase "Order of months in year" $ forM_ timeAllMonths $ \m ->
-    show (toEnum @Month m) @?= timeShow (timeMonth m)
+  [ testCase "Numbering months from 1" $
+    fromEnum <$> allMonths @?= timeAllMonths
+  , testCase "Order of months in year" $
+    forM_ timeAllMonths $ \m ->
+      show (toEnum @Month m) @?= timeShow (timeMonth m)
+  , testCase "Month length" $ 
+    forM_ enumerate $ \isLeap ->
+      forM_ timeAllMonths $ \m ->
+        monthLength isLeap (toEnum m) @?= Time.monthLength isLeap m
   ]
  where
   timeAllMonths :: [Time.MonthOfYear]

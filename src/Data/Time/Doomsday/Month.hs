@@ -1,6 +1,7 @@
 module Data.Time.Doomsday.Month (
     Month (..),
     allMonths,
+    monthLength,
 ) where
 
 data Month
@@ -20,6 +21,21 @@ data Month
 
 allMonths :: [Month]
 allMonths = [January .. December]
+
+monthLength :: Num a => Bool -> Month -> a
+monthLength isLeap = \case
+  January -> 31
+  February -> if isLeap then 29 else 28
+  March -> 31
+  April -> 30
+  May -> 31
+  June -> 30
+  July -> 31
+  August -> 31
+  September -> 30
+  October -> 31
+  November -> 30
+  December -> 31
 
 -- | Months are numbered starting from 1 and iteration repeats forever.
 instance Enum Month where
