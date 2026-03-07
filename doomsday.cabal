@@ -59,7 +59,10 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  Data.Time.Doomsday
+    exposed-modules:
+      Data.Time.Doomsday
+      Data.Time.Doomsday.Year
+      Data.Time.Doomsday.Month
 
     -- Modules included in this library but not exported.
     -- other-modules:

@@ -1,10 +1,7 @@
 module Data.Time.Doomsday (
-  -- Years
-  Year,
-  isLeapYear,
+  module Y,
+  module M,
 ) where
 
-type Year = Integer
-
-isLeapYear :: Year -> Bool
-isLeapYear y = y `mod` 4 == 0 && (y `mod` 100 /= 0 || y `mod` 400 == 0)
+import Data.Time.Doomsday.Year as Y
+import Data.Time.Doomsday.Month as M
