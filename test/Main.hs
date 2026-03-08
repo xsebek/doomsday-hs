@@ -59,6 +59,16 @@ dayOfWeekTests = testGroup "Day of Week tests" $
   [ testCase "Numbering weekdays from Sunday" $ do
     fromEnum <$> daysOfWeek @?= [0..6]
     show <$> daysOfWeek @?= timeShow <$> [Time.Sunday .. Time.Saturday]
+  , testCase "Counting with weekdays" $ do
+    Sunday + Sunday @?= Sunday
+    Sunday + Monday @?= Monday
+    Monday + Wednesday @?= Thursday
+    Friday - Saturday @?= Saturday
+    negate Friday @?= Tuesday
+  , testCase "Using numbers as weekdays" $ do
+    1 @?= Monday
+    Tuesday * 5 @?= Wednesday
+    Thursday `div` 4 @?= Monday
   ]
  where
   timeShow :: Time.DayOfWeek -> String
