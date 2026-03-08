@@ -3,6 +3,8 @@ module Data.Time.Doomsday.DayOfWeek (
     daysOfWeek,
 ) where
 
+import Data.Time.Doomsday.Enum.Util qualified as Enum
+
 data DayOfWeek
     = Sunday
     | Monday
@@ -15,9 +17,6 @@ data DayOfWeek
 
 daysOfWeek :: [DayOfWeek]
 daysOfWeek = [Sunday .. Saturday]
-
-bimap :: (Int -> Int -> Int) -> DayOfWeek -> DayOfWeek -> DayOfWeek
-bimap op x y = toEnum $ fromEnum x `op` fromEnum y
 
 -- | Days of week are numbered starting from Sunday as 0
 --   and iteration repeats forever.
@@ -40,26 +39,22 @@ instance Enum DayOfWeek where
     Thursday -> 4
     Friday -> 5
     Saturday -> 6
-  enumFrom :: DayOfWeek -> [DayOfWeek]
-  enumFrom = map toEnum . enumFrom . fromEnum
-  enumFromThen :: DayOfWeek -> DayOfWeek -> [DayOfWeek]
-  enumFromThen x y = map toEnum $ enumFromThen (fromEnum x) (fromEnum y)
   enumFromTo :: DayOfWeek -> DayOfWeek -> [DayOfWeek]
-  enumFromTo x y = map toEnum $ enumFromTo (fromEnum x) (fromEnum y)
+  enumFromTo = Enum.enumFromToEq
   enumFromThenTo :: DayOfWeek -> DayOfWeek -> DayOfWeek -> [DayOfWeek]
-  enumFromThenTo x y z = map toEnum $ enumFromThenTo (fromEnum x) (fromEnum y) (fromEnum z)
+  enumFromThenTo = Enum.enumFromThenToEqZeroBased
 
 instance Num DayOfWeek where
   (+) :: DayOfWeek -> DayOfWeek -> DayOfWeek
-  (+) = bimap (+)
+  (+) = Enum.iso2 (+)
   (-) :: DayOfWeek -> DayOfWeek -> DayOfWeek
-  (-) = bimap (-)
+  (-) = Enum.iso2 (-)
   (*) :: DayOfWeek -> DayOfWeek -> DayOfWeek
-  (*) = bimap (*)
+  (*) = Enum.iso2 (*)
   abs :: DayOfWeek -> DayOfWeek
   abs = id
   signum :: DayOfWeek -> DayOfWeek
-  signum = toEnum . signum . fromEnum
+  signum = Enum.iso1 signum
   fromInteger :: Integer -> DayOfWeek
   fromInteger = toEnum . fromInteger . (`mod` 7)
 
@@ -68,7 +63,6 @@ instance Real DayOfWeek where
 
 instance Integral DayOfWeek where
   quotRem :: DayOfWeek -> DayOfWeek -> (DayOfWeek, DayOfWeek)
-  quotRem x y = let (q,r) = fromEnum x `quotRem` fromEnum y in (toEnum q, toEnum r)
+  quotRem = Enum.iso2P quotRem
   toInteger :: DayOfWeek -> Integer
   toInteger = toInteger . fromEnum
-

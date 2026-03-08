@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Main (main) where
 
 import Data.Time.Doomsday
@@ -19,6 +21,7 @@ tests = testGroup "Unit tests"
   [ isLeapYearTests
   , monthTests
   , dayOfWeekTests
+  , daysFromToTests
   ]
 
 isLeapYearTests :: TestTree
@@ -45,6 +48,13 @@ monthTests = testGroup "Month tests"
     forM_ enumerate $ \isLeap ->
       forM_ timeAllMonths $ \m ->
         monthLength isLeap (toEnum m) @?= Time.monthLength isLeap m
+  , testCase "Month number" $ toEnum 13 @?= January
+  , testCase "Month numbers" $ do
+    1 @?= January
+    12 @?= December
+    0 @?= December
+    -1 @?= November
+    13 @?= January
   ]
  where
   timeAllMonths :: [Time.MonthOfYear]
@@ -55,7 +65,7 @@ monthTests = testGroup "Month tests"
   timeShow = Time.formatTime Time.defaultTimeLocale "%B"
 
 dayOfWeekTests :: TestTree
-dayOfWeekTests = testGroup "Day of Week tests" $
+dayOfWeekTests = testGroup "Day of Week tests"
   [ testCase "Numbering weekdays from Sunday" $ do
     fromEnum <$> daysOfWeek @?= [0..6]
     show <$> daysOfWeek @?= timeShow <$> [Time.Sunday .. Time.Saturday]
@@ -74,6 +84,23 @@ dayOfWeekTests = testGroup "Day of Week tests" $
   timeShow :: Time.DayOfWeek -> String
   timeShow = Time.formatTime Time.defaultTimeLocale "%A"
 
+
+daysFromToTests :: TestTree
+daysFromToTests = testGroup "Date distance tests"
+  [ testCase "Same date is 0 days" $ daysFromTo (Date 2000 01 01) (Date 2000 01 01) @?= 0
+  , testCase "Next date is 1 days" $ daysFromTo (Date 2000 01 01) (Date 2000 01 02) @?= 1
+  , testCase "Yesterday is -1 days" $ daysFromTo (Date 2000 01 02) (Date 2000 01 01) @?= -1
+  , testCase "Next month is 31 days" $ daysFromTo (Date 2000 01 01) (Date 2000 02 01) @?= 31
+  , testCase "Next month end is 59 days" $ daysFromTo (Date 2000 01 01) (Date 2000 02 29) @?= 59
+  , testCase "Next month middle is 40 days" $ daysFromTo (Date 2000 01 11) (Date 2000 02 20) @?= 40
+  , testProperty "Date diff same as time" $ \(D a) (D b) ->
+    let (da, db) = (toDate a, toDate b)
+    in daysFromTo (toDate a) (toDate b) === fromInteger (b `Time.diffDays` a)
+      & classify (da.year == db.year) "same year"
+  ]
+ where
+  toDate (Time.YearMonthDay y m d) = Date y (toEnum m) d
+
 -- -----------------------------------------------------------------
 -- Arbitrary instances
 -- -----------------------------------------------------------------
@@ -85,4 +112,16 @@ instance Arbitrary Y where
   arbitrary :: Gen Y
   arbitrary = Y . (+2000) <$> scale (*2) arbitrary
   shrink :: Y -> [Y]
-  shrink = map Y . shrink . timeYear
+  shrink = map Y . shrink . subtract 2000 . timeYear
+
+newtype D = D { timeDay :: Time.Day }
+  deriving (Show)
+
+instance Arbitrary D where
+  arbitrary :: Gen D
+  arbitrary = fmap D $ Time.YearMonthDay <$> scale (`div` 10) (fmap timeYear arbitrary) <*> choose (1, 12) <*> choose (1, 31)
+  shrink :: D -> [D]
+  shrink = shrinkMap (D . flip Time.addDays d2000) (flip Time.diffDays d2000 . timeDay)
+
+d2000 :: Time.Day
+d2000 = Time.YearMonthDay 2000 01 01

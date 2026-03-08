@@ -63,10 +63,12 @@ library
       Data.Time.Doomsday
       Data.Time.Doomsday.Year
       Data.Time.Doomsday.Month
+      Data.Time.Doomsday.Date
       Data.Time.Doomsday.DayOfWeek
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+      Data.Time.Doomsday.Enum.Util
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

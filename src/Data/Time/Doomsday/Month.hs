@@ -4,6 +4,9 @@ module Data.Time.Doomsday.Month (
     monthLength,
 ) where
 
+import Data.Time.Doomsday.Enum.Util (Pred (..))
+import Data.Time.Doomsday.Enum.Util qualified as Enum
+
 data Month
     = January
     | February
@@ -37,10 +40,13 @@ monthLength isLeap = \case
   November -> 30
   December -> 31
 
+mod1to12 :: Integral m => m -> m
+mod1to12 m = ((m - 1) `mod` 12) + 1
+
 -- | Months are numbered starting from 1 and iteration repeats forever.
 instance Enum Month where
   toEnum :: Int -> Month
-  toEnum m = case (m - 1 `mod` 12) + 1 of
+  toEnum m = case mod1to12 m of
     1 -> January
     2 -> February
     3 -> March
@@ -52,7 +58,8 @@ instance Enum Month where
     9 -> September
     10 -> October
     11 -> November
-    _ -> December
+    12 -> December
+    x -> error $ show x <> " not in <1,12>"
   fromEnum :: Month -> Int
   fromEnum = \case
     January -> 1
@@ -67,11 +74,22 @@ instance Enum Month where
     October -> 10
     November -> 11
     December -> 12
-  enumFrom :: Month -> [Month]
-  enumFrom = map toEnum . enumFrom . fromEnum
-  enumFromThen :: Month -> Month -> [Month]
-  enumFromThen x y = map toEnum $ enumFromThen (fromEnum x) (fromEnum y)
   enumFromTo :: Month -> Month -> [Month]
-  enumFromTo x y = map toEnum $ enumFromTo (fromEnum x) (fromEnum y)
+  enumFromTo = Enum.enumFromToEq
   enumFromThenTo :: Month -> Month -> Month -> [Month]
-  enumFromThenTo x y z = map toEnum $ enumFromThenTo (fromEnum x) (fromEnum y) (fromEnum z)
+  enumFromThenTo start next end =
+    getPred <$> Enum.enumFromThenToEqZeroBased (Pred start) (Pred next) (Pred end)
+
+instance Num Month where
+  (+) :: Month -> Month -> Month
+  (+) = error "cannot add Month"
+  (*) :: Month -> Month -> Month
+  (*) = error "cannot mul Month"
+  signum :: Month -> Month
+  signum = error "cannot signum Month"
+  abs :: Month -> Month
+  abs = id
+  negate :: Month -> Month
+  negate = Enum.iso1 negate
+  fromInteger :: Integer -> Month
+  fromInteger = toEnum . fromInteger . mod1to12
