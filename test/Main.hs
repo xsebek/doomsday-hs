@@ -12,6 +12,7 @@ import Data.Function ((&))
 import Control.Monad (forM_)
 import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
+import Data.Time.Doomsday.Expression
 
 main :: IO ()
 main = defaultMain tests
@@ -22,6 +23,7 @@ tests = testGroup "Unit tests"
   , monthTests
   , dayOfWeekTests
   , daysFromToTests
+  , expressionTests
   ]
 
 isLeapYearTests :: TestTree
@@ -84,7 +86,6 @@ dayOfWeekTests = testGroup "Day of Week tests"
   timeShow :: Time.DayOfWeek -> String
   timeShow = Time.formatTime Time.defaultTimeLocale "%A"
 
-
 daysFromToTests :: TestTree
 daysFromToTests = testGroup "Date distance tests"
   [ testCase "Same date is 0 days" $ daysFromTo (Date 2000 01 01) (Date 2000 01 01) @?= 0
@@ -100,6 +101,29 @@ daysFromToTests = testGroup "Date distance tests"
   ]
  where
   toDate (Time.YearMonthDay y m d) = Date y (toEnum m) d
+
+expressionTests :: TestTree
+expressionTests = testGroup "Expressions"
+  [ expression "1" 1 1
+  , expression "Tuesday" (EDay Tuesday) 2
+  , expressionWithVars [('X', 5), ('Y', 7)] "Y" (EVar 'Y') 7
+  , expression "-10" (-10) (-10) 
+  , expression "-(-10)" (-(-10)) 10
+  , expression "1 + 2" (1 + 2) 3
+  , expression "1 - 2" (1 - 2) (-1)
+  , expression "3 * 3" (3 * 3) 9
+  , expression "12 / 4" (12 `div` 4) 3
+  , expression "1 + 2 * 3" (1 + (2 * 3)) 7
+  , expression "(1 + 2) * 3" ((1 + 2) * 3) 9 
+  , expression "8 % 7" (8 `mod` 7) 1
+  , expression "(4 + 5) % 7" ((4 + 5) `mod` 7) 2
+  , expressionWithVars [('I', 5)] "Tuesday + I" (EDay Tuesday + EVar 'I') 7
+  ]
+ where
+  expressionWithVars v pret e res = testCase pret $ do
+    eval v e @?= res
+    pretty e @?= pret
+  expression = expressionWithVars []
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances
