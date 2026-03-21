@@ -66,10 +66,13 @@ library
       Data.Time.Doomsday.Date
       Data.Time.Doomsday.DayOfWeek
       Data.Time.Doomsday.Expression
+      Data.Time.Doomsday.Explanation
 
     -- Modules included in this library but not exported.
     other-modules:
       Data.Time.Doomsday.Enum.Util
+      Data.Time.Doomsday.State.Simple
+      Data.Time.Doomsday.String.Pretty
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

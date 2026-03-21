@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE MultilineStrings #-}
 
 module Main (main) where
 
@@ -12,7 +13,6 @@ import Data.Function ((&))
 import Control.Monad (forM_)
 import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
-import Data.Time.Doomsday.Expression
 
 main :: IO ()
 main = defaultMain tests
@@ -24,6 +24,7 @@ tests = testGroup "Unit tests"
   , dayOfWeekTests
   , daysFromToTests
   , expressionTests
+  , explanationTests
   ]
 
 isLeapYearTests :: TestTree
@@ -124,6 +125,20 @@ expressionTests = testGroup "Expressions"
     eval v e @?= res
     pretty e @?= pret
   expression = expressionWithVars []
+
+explanationTests :: TestTree
+explanationTests = testGroup "Explanations"
+  [ testCase "Pretty abstract explanation" $ do
+    let (s, e) = runState findCenturyAnchor $ Explanation []
+    e @?= EVar 'A'
+    pretty s @?= """
+      Find the century anchor. Starting with year Y:
+       - take the century digits C = Y / 100
+       - in a four century cycle its index is F = C % 4
+       - the resulting increment is I = F * 5
+       - add Tuesday and get A = Tuesday + I\n
+      """
+  ]
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances

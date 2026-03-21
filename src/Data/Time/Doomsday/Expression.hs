@@ -3,10 +3,10 @@
 module Data.Time.Doomsday.Expression (
   Expression (..),
   eval,
-  pretty,
 ) where
 
 import Data.Time.Doomsday.DayOfWeek
+import Data.Time.Doomsday.String.Pretty
 import Data.Foldable (find)
 
 data Expression
@@ -33,22 +33,23 @@ eval vars = \case
   EDiv e1 e2 -> eval vars e1 `div` eval vars e2
   EMod e1 e2 -> eval vars e1 `mod` eval vars e2
 
-pretty :: Expression -> String
-pretty = go 12
- where
-  b :: Int -> Int -> String -> String
-  b pOut pIn s = if pOut <= pIn then "(" <> s <> ")" else s
-  go :: Int -> Expression -> String
-  go p = \case
-    EConst i -> show i
-    EDay d -> show d
-    EVar v -> [v]
-    ENeg e1 -> b p 4 $ "-" <> go 4 e1
-    EAdd e1 (ENeg e2) -> b p 4 $ go 4 e1 <> " - " <> go 4 e2    
-    EAdd e1 e2 -> b p 4 $ go 4 e1 <> " + " <> go 4 e2
-    EMul e1 e2 -> b p 3 $ go 3 e1 <> " * " <> go 3 e2
-    EDiv e1 e2 -> b p 3 $ go 3 e1 <> " / " <> go 3 e2
-    EMod e1 e2 -> b p 3 $ go 3 e1 <> " % " <> go 3 e2
+instance Pretty Expression where
+  pretty :: Expression -> String
+  pretty = go 12
+   where
+    b :: Int -> Int -> String -> String
+    b pOut pIn s = if pOut <= pIn then "(" <> s <> ")" else s
+    go :: Int -> Expression -> String
+    go p = \case
+      EConst i -> show i
+      EDay d -> show d
+      EVar v -> [v]
+      ENeg e1 -> b p 4 $ "-" <> go 4 e1
+      EAdd e1 (ENeg e2) -> b p 4 $ go 4 e1 <> " - " <> go 4 e2    
+      EAdd e1 e2 -> b p 4 $ go 4 e1 <> " + " <> go 4 e2
+      EMul e1 e2 -> b p 3 $ go 3 e1 <> " * " <> go 3 e2
+      EDiv e1 e2 -> b p 3 $ go 3 e1 <> " / " <> go 3 e2
+      EMod e1 e2 -> b p 3 $ go 3 e1 <> " % " <> go 3 e2
 
 instance Num Expression where
   (+) :: Expression -> Expression -> Expression
