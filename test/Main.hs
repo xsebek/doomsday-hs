@@ -13,6 +13,8 @@ import Data.Function ((&))
 import Control.Monad (forM_)
 import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
+import Test.Tasty.Golden
+import Data.String (fromString, IsString)
 
 main :: IO ()
 main = defaultMain tests
@@ -128,26 +130,16 @@ expressionTests = testGroup "Expressions"
 
 explanationTests :: TestTree
 explanationTests = testGroup "Explanations"
-  [ testCase "Pretty abstract explanation" $ do
-    centuryVar @?= EVar 'A'
-    pretty centuryExpl @?= """
-      Find the century anchor. Starting with year Y:
-       - take the century digits C = Y / 100
-       - in a four century cycle its index is F = C % 4
-       - the resulting increment is I = F * 5
-       - add Tuesday and get A = Tuesday + I\n
-      """
-  , testCase "Pretty evaluated explanation" $ do
-    pretty (evalExplanation (Date 2026 02 27) centuryExpl) @?= """
-      Find the century anchor. Starting with year 2026:
-       - take the century digits C = Y / 100 = 2026 / 100 = 20
-       - in a four century cycle its index is F = C % 4 = 20 % 4 = 0
-       - the resulting increment is I = F * 5 = 0 * 5 = 0
-       - add Tuesday and get A = Tuesday + I = Tuesday + 0 = 2\n
-      """
+  [ testCase "Part builder returns result variable" $ centuryVar @?= EVar 'A'
+  , goldenVsString "Pretty abstract explanation" "test/data/century_abstract.golden" $
+      prettyIO centuryExpl
+  , goldenVsString "Pretty evaluated explanation" "test/data/century_evaluated.golden" $
+      prettyIO (evalExplanation (Date 2026 02 27) centuryExpl)
   ]
  where
   (centuryExpl, centuryVar) = runState findCenturyAnchor $ Explanation [] Nothing Nothing
+  prettyIO :: (Pretty a, IsString s) => a -> IO s
+  prettyIO = pure . fromString . pretty
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances

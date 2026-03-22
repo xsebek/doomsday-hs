@@ -1,0 +1,5 @@
+Find the century anchor. Starting with year Y:
+ - take the century digits C = Y / 100
+ - in a four century cycle its index is F = C % 4
+ - the resulting increment is I = F * 5
+ - add Tuesday and get A = Tuesday + I
