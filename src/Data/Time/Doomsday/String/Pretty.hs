@@ -6,3 +6,6 @@ class Pretty a where
 
     default pretty :: Show a => a -> String
     pretty = show
+
+instance Pretty Int
+instance Pretty Integer

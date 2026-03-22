@@ -3,11 +3,14 @@
 module Data.Time.Doomsday.Expression (
   Expression (..),
   eval,
+  substitute,
 ) where
 
 import Data.Time.Doomsday.DayOfWeek
 import Data.Time.Doomsday.String.Pretty
 import Data.Foldable (find)
+import Data.Maybe (fromMaybe)
+import Data.List (intercalate)
 
 data Expression
   = EConst Int
@@ -33,6 +36,19 @@ eval vars = \case
   EDiv e1 e2 -> eval vars e1 `div` eval vars e2
   EMod e1 e2 -> eval vars e1 `mod` eval vars e2
 
+substitute :: [(Char, Expression)] -> Expression -> Expression
+substitute vars = \case
+  c@(EConst _) -> c
+  d@(EDay _) -> d
+  EVar v -> fv v
+  ENeg e1 -> ENeg $ substitute vars e1
+  EAdd e1 e2 -> substitute vars e1 `EAdd` substitute vars e2
+  EMul e1 e2 -> substitute vars e1 `EMul` substitute vars e2
+  EDiv e1 e2 -> substitute vars e1 `EDiv` substitute vars e2
+  EMod e1 e2 -> substitute vars e1 `EMod` substitute vars e2 
+ where
+  fv v = fromMaybe (EVar v) . fmap snd $ find ((==v) . fst) vars
+
 instance Pretty Expression where
   pretty :: Expression -> String
   pretty = go 12
@@ -50,6 +66,10 @@ instance Pretty Expression where
       EMul e1 e2 -> b p 3 $ go 3 e1 <> " * " <> go 3 e2
       EDiv e1 e2 -> b p 3 $ go 3 e1 <> " / " <> go 3 e2
       EMod e1 e2 -> b p 3 $ go 3 e1 <> " % " <> go 3 e2
+
+instance Pretty [Expression] where
+  pretty :: [Expression] -> String
+  pretty = intercalate " = " . map pretty
 
 instance Num Expression where
   (+) :: Expression -> Expression -> Expression

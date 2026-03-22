@@ -4,6 +4,7 @@ module Data.Time.Doomsday.DayOfWeek (
 ) where
 
 import Data.Time.Doomsday.Enum.Util qualified as Enum
+import Data.Time.Doomsday.String.Pretty (Pretty)
 
 data DayOfWeek
     = Sunday
@@ -17,6 +18,8 @@ data DayOfWeek
 
 daysOfWeek :: [DayOfWeek]
 daysOfWeek = [Sunday .. Saturday]
+
+instance Pretty DayOfWeek
 
 -- | Days of week are numbered starting from Sunday as 0
 --   and iteration repeats forever.

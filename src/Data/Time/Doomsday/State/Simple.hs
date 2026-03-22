@@ -1,9 +1,21 @@
 module Data.Time.Doomsday.State.Simple (
     State (..),
+    get,
+    put,
+    modify,
 ) where
 
 newtype State s a = State { runState :: s -> (s, a) }
   deriving (Functor)
+
+get :: State s s
+get = State $ \s -> (s, s)
+
+modify :: (s -> s) -> State s ()
+modify f = State $ \s -> (f s, ())
+
+put :: s -> State s ()
+put = modify . const
 
 instance Applicative (State s) where
   pure :: a -> State s a

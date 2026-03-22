@@ -129,16 +129,25 @@ expressionTests = testGroup "Expressions"
 explanationTests :: TestTree
 explanationTests = testGroup "Explanations"
   [ testCase "Pretty abstract explanation" $ do
-    let (s, e) = runState findCenturyAnchor $ Explanation []
-    e @?= EVar 'A'
-    pretty s @?= """
+    centuryVar @?= EVar 'A'
+    pretty centuryExpl @?= """
       Find the century anchor. Starting with year Y:
        - take the century digits C = Y / 100
        - in a four century cycle its index is F = C % 4
        - the resulting increment is I = F * 5
        - add Tuesday and get A = Tuesday + I\n
       """
+  , testCase "Pretty evaluated explanation" $ do
+    pretty (evalExplanation (Date 2026 02 27) centuryExpl) @?= """
+      Find the century anchor. Starting with year 2026:
+       - take the century digits C = Y / 100 = 2026 / 100 = 20
+       - in a four century cycle its index is F = C % 4 = 20 % 4 = 0
+       - the resulting increment is I = F * 5 = 0 * 5 = 0
+       - add Tuesday and get A = Tuesday + I = Tuesday + 0 = 2\n
+      """
   ]
+ where
+  (centuryExpl, centuryVar) = runState findCenturyAnchor $ Explanation [] Nothing Nothing
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances

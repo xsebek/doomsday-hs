@@ -1,65 +1,102 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Data.Time.Doomsday.Explanation (
-    Explanation (..),
-    Part (..),
-    Step (..),
+    ExplanationF (..),
+    PartF (..),
+    StepF (..),
+    Explanation,
+    Part,
+    Step,
+    -- * Build explanation
     PartBuilder,
     step,
     part,
     startingWithYear,
+    -- * Evaluate explanation
+    evalExplanation,
 ) where
 
+import Data.List (intercalate, singleton)
+import Data.Time.Doomsday.Date
+import Data.Time.Doomsday.DayOfWeek (DayOfWeek)
 import Data.Time.Doomsday.Expression
 import Data.Time.Doomsday.State.Simple
 import Data.Time.Doomsday.String.Pretty
-import Data.List (intercalate)
+import Data.Time.Doomsday.Year
 
 ---------------------------------------------------------------------
 -- DATA
 ---------------------------------------------------------------------
 
-data Explanation = Explanation
-  { parts :: [Part]
+data ExplanationF f = Explanation
+  { parts :: [PartF f]
+  , relativeTo :: Maybe Ordering
+  , result :: Maybe DayOfWeek
   }
+  deriving (Functor)
 
-data Part = Part
+type Explanation = ExplanationF Expression
+
+data PartF f = Part
   { goal :: String
   , startDate :: StartDate
-  , steps :: [Step]
+  , steps :: [StepF f]
   }
+  deriving (Functor)
 
-data StartDate = StartingWithYear Char | StartingWithDate
+type Part = PartF Expression
 
-data Step = Step
+data StartDate
+  = StartingWithYear Char (Maybe Year)
+  | StartingWithDate
+
+data StepF f = StepF
   { description :: String
   , variable :: Char
-  , expression :: Expression
+  , expression :: f
   }
+  deriving (Functor)
 
-data PartBuilder
+type Step = StepF Expression
+
+pattern Step :: String -> Char -> Expression -> StepF Expression
+pattern Step s v e = StepF s v e
+
+data PartBuilder 
   = PartStartYear Char (State Part Expression)
 
 ---------------------------------------------------------------------
 -- Pretty
 ---------------------------------------------------------------------
 
-instance Pretty Explanation where
-  pretty :: Explanation -> String
-  pretty (Explanation ps) = intercalate "\n" $ map pretty (reverse ps)
+instance Pretty f => Pretty (ExplanationF f) where
+  pretty :: ExplanationF f -> String
+  pretty expl = intercalate "\n" $ map pretty expl.parts <> res
+   where
+    res = case (expl.relativeTo, expl.result) of
+      (Just o, Just r) -> singleton . unwords $ ["The weekday", tense o, pretty r]
+      _ -> []
+    tense = \case
+      LT -> "was"
+      EQ -> "is"
+      GT -> "will be"
 
-instance Pretty Part where
-  pretty :: Part -> String
-  pretty (Part g s ss) = unlines $ (g <> " " <> pretty s) : map ((" - " <>) . pretty) (reverse ss)
+instance Pretty f => Pretty (PartF f) where
+  pretty :: PartF f -> String
+  pretty (Part g s ss) = unlines $ (g <> " " <> pretty s) : map ((" - " <>) . pretty) ss
 
 instance Pretty StartDate where
   pretty :: StartDate -> String
   pretty = \case
-    StartingWithYear y -> "Starting with year " <> [y] <> ":"
+    StartingWithYear y n -> "Starting with year " <> maybe [y] pretty n <> ":"
     StartingWithDate -> "Starting with date:"
 
-instance Pretty Step where
-  pretty :: Step -> String
-  pretty (Step d v e) = unwords [d, [v], "=", pretty e]
+instance Pretty f => Pretty (StepF f) where
+  pretty :: StepF f -> String
+  pretty (StepF d v e) = unwords [d, [v], "=", pretty e]
 
 ---------------------------------------------------------------------
 -- Functions
@@ -68,8 +105,10 @@ instance Pretty Step where
 part :: String -> PartBuilder -> State Explanation Expression
 part goal = \case
   (PartStartYear y (State f)) -> State $ \expl ->
-    case f (Part goal (StartingWithYear y) []) of
-      (p, e) -> (expl { parts = p : parts expl }, e)
+    case f (Part goal (StartingWithYear y Nothing) []) of
+      (p, e) -> (expl { parts = rs p : parts expl }, e)
+ where
+  rs p = p { steps = reverse p.steps }
 
 startingWithYear :: Char -> (Expression -> State Part Expression) -> PartBuilder
 startingWithYear y b = PartStartYear y $ b (EVar y)
@@ -77,3 +116,40 @@ startingWithYear y b = PartStartYear y $ b (EVar y)
 step :: String -> Char -> Expression -> State Part Expression
 step description variable expression = State $ \p ->
   (p { steps = Step description variable expression : steps p }, EVar variable)
+
+type Var = (Char, Expression)
+
+evalExplanation :: Date -> Explanation -> ExplanationF [Expression]
+evalExplanation d expl = expl { parts = nParts, result = Just result }
+ where
+  (nVars, nParts) = flip runState [] $ mapM (evalPart d) expl.parts
+  result = toEnum . eval [] . snd $ fromVars "explanation" nVars 
+
+evalPart :: Date -> Part -> State [Var] (PartF [Expression])
+evalPart d p = do
+  (pVars, nStart) <- evalStart d p.startDate
+  let (nvars, nss) = flip runState pVars $ mapM evalStep p.steps
+  let result = fromVars "part" nvars
+  modify $ (:) result
+  pure p { steps = nss, startDate = nStart }
+
+fromVars :: String -> [Var] -> Var
+fromVars n = \case
+  (r:_) -> r
+  [] -> error $ "cannot eval empty " <> n
+
+evalStart :: Date -> StartDate -> State [Var] ([Var], StartDate)
+evalStart d s = do
+  vars <- get
+  pure $ case s of
+    StartingWithYear y _ -> ((y, fromIntegral d.year) : vars, StartingWithYear y (Just d.year))
+    StartingWithDate -> (vars, s)
+
+evalStep :: Step -> State [Var] (StepF [Expression])
+evalStep s = do
+  vars <- get
+  let e = expression s
+  let se = substitute vars e
+  let ese = EConst $ eval [] se
+  modify $ (:) (s.variable, ese)
+  pure s { expression = [e, se, ese] }
