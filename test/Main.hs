@@ -156,6 +156,7 @@ equationTests = testGroup "Equations"
   [ testCase "uniq res" $ uniq (EqRes 1) @?= EqRes 1
   , testCase "uniq same var" $ uniq ('x' ^== 'x') @?= toEquation 'x'
   , testCase "uniq diff var" $ uniq ('x' ^== 'y') @?= ('x' ^== 'y')
+  , testCase "lift equiv" $ ('x' ^== (2 :: Int) ^=== Tuesday) @?= (EVar 'x' :== EConst 2 :=== EqRes (EDay Tuesday))
   ]
 
 -- -----------------------------------------------------------------

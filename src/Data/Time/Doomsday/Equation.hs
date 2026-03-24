@@ -10,6 +10,7 @@ module Data.Time.Doomsday.Equation (
 
 import Data.Time.Doomsday.Expression
 import Data.Time.Doomsday.String.Pretty
+import Data.Time.Doomsday.DayOfWeek (DayOfWeek)
 
 data Equation
   = EqRes Expression
@@ -27,30 +28,37 @@ instance Pretty Equation where
       e :== eq -> pretty e <> " = " <> pretty eq
       e :=== eq -> pretty e <> " ≡ " <> pretty eq
 
+type EqOp = Expression -> Equation -> Equation
+
+eqToEither :: Equation -> Either (Expression, EqOp, Equation) Expression
+eqToEither = \case
+  EqRes r -> Right r
+  e :== eq -> Left (e, (:==), eq) 
+  e :=== eq -> Left (e, (:===), eq) 
+
 eqResult :: Equation -> Expression
-eqResult = \case
-  EqRes r -> r
-  _ :== e -> eqResult e
-  _ :=== e -> eqResult e
+eqResult eq = case eqToEither eq of
+  Right r -> r
+  Left (_, _, e) -> eqResult e
 
 uniq :: Equation -> Equation
 uniq = \case
-  e | Just (e1, EqRes e2) <- s e -> if e1 == e2 then EqRes e1 else e
-  e1 :== eq1 | Just (e2, eq2) <- s eq1 -> if e1 == e2 then e1 :== uniq eq2 else e1 :== uniq eq1
-  e1 :=== eq1 | Just (e2, eq2) <- s eq1 -> if e1 == e2 then e1 :=== uniq eq2 else e1 :=== uniq eq1
-  e -> e
- where
-  s = \case
-    EqRes _ -> Nothing
-    e :== eq -> Just (e, eq)
-    e :=== eq -> Just (e, eq)
+  e | Left (e1, _, EqRes e2) <- eqToEither e
+        -> if e1 == e2 then EqRes e1 else e
+    | Left (e1, eOp1, eq2) <- eqToEither e
+    , Left (e2, eOp2, eq3) <- eqToEither eq2
+        -> if e1 == e2 then uniq $ e1 `eOp2` eq3 else e1 `eOp1` uniq eq2
+    | otherwise
+        -> e
 
 class IsEquation a where
     toEquation :: a -> Equation
 
 instance IsEquation Equation where toEquation = id
 instance IsEquation Expression where toEquation = EqRes
+instance IsEquation Int where toEquation = EqRes . EConst
 instance IsEquation Char where toEquation = EqRes . EVar
+instance IsEquation DayOfWeek where toEquation = EqRes . EDay
 
 (^==) :: (IsEquation a, IsEquation b) => a -> b -> Equation
 a ^== b = toEquation a `eqConcat` toEquation b
@@ -58,14 +66,15 @@ a ^== b = toEquation a `eqConcat` toEquation b
 (^===) :: (IsEquation a, IsEquation b) => a -> b -> Equation
 a ^=== b = toEquation a `equivConcat` toEquation b
 
+infixr 4 ^==
+infixr 4 ^===
+
 eqConcat :: Equation -> Equation -> Equation
-eqConcat e1 e2 = case e1 of
-  EqRes r -> r :== e2
-  ex1 :== e -> ex1 :== eqConcat e e2
-  ex1 :=== e -> ex1 :=== eqConcat e e2
+eqConcat e1 e2 = case eqToEither e1 of
+  Right r -> r :== e2
+  Left (ex, eOp, eq) -> ex `eOp` (eqConcat eq e2)
 
 equivConcat :: Equation -> Equation -> Equation
-equivConcat e1 e2 = case e1 of
-  EqRes r -> r :== e2
-  ex1 :== e -> ex1 :== eqConcat e e2
-  ex1 :=== e -> ex1 :=== eqConcat e e2
+equivConcat e1 e2 = case eqToEither e1 of
+  Right r -> r :=== e2
+  Left (ex, eOp, eq) -> ex `eOp` (eqConcat eq e2)
