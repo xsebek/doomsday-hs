@@ -65,6 +65,7 @@ library
       Data.Time.Doomsday.Month
       Data.Time.Doomsday.Date
       Data.Time.Doomsday.DayOfWeek
+      Data.Time.Doomsday.Equation
       Data.Time.Doomsday.Expression
       Data.Time.Doomsday.Explanation
 

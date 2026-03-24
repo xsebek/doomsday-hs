@@ -4,12 +4,9 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Data.Time.Doomsday.Explanation (
-    ExplanationF (..),
-    PartF (..),
-    StepF (..),
-    Explanation,
-    Part,
-    Step,
+    Explanation (..),
+    Part (..),
+    Step (..),
     -- * Build explanation
     PartBuilder,
     part,
@@ -24,6 +21,7 @@ module Data.Time.Doomsday.Explanation (
 import Data.List (intercalate, singleton)
 import Data.Time.Doomsday.Date
 import Data.Time.Doomsday.DayOfWeek (DayOfWeek)
+import Data.Time.Doomsday.Equation
 import Data.Time.Doomsday.Expression
 import Data.Time.Doomsday.State.Simple
 import Data.Time.Doomsday.String.Pretty
@@ -33,39 +31,27 @@ import Data.Time.Doomsday.Year
 -- DATA
 ---------------------------------------------------------------------
 
-data ExplanationF f = Explanation
-  { parts :: [PartF f]
+data Explanation = Explanation
+  { parts :: [Part]
   , relativeTo :: Maybe Ordering
   , result :: Maybe DayOfWeek
   }
-  deriving (Functor)
 
-type Explanation = ExplanationF Expression
-
-data PartF f = Part
+data Part = Part
   { goal :: String
   , startDate :: StartDate
-  , steps :: [StepF f]
+  , steps :: [Step]
   }
-  deriving (Functor)
-
-type Part = PartF Expression
 
 data StartDate
   = StartingWithYear Char (Maybe Year)
   | StartingWithDate
 
-data StepF f = StepF
+data Step = Step
   { description :: String
   , variable :: Char
-  , expression :: f
+  , equation :: Equation
   }
-  deriving (Functor)
-
-type Step = StepF Expression
-
-pattern Step :: String -> Char -> Expression -> StepF Expression
-pattern Step s v e = StepF s v e
 
 data PartBuilder 
   = PartStartYear Char (State Part Expression)
@@ -74,8 +60,7 @@ data PartBuilder
 -- Pretty
 ---------------------------------------------------------------------
 
-instance Pretty f => Pretty (ExplanationF f) where
-  pretty :: ExplanationF f -> String
+instance Pretty Explanation where
   pretty expl = intercalate "\n" $ map pretty expl.parts <> res
    where
     res = case (expl.relativeTo, expl.result) of
@@ -86,8 +71,7 @@ instance Pretty f => Pretty (ExplanationF f) where
       EQ -> "is"
       GT -> "will be"
 
-instance Pretty f => Pretty (PartF f) where
-  pretty :: PartF f -> String
+instance Pretty Part where
   pretty (Part g s ss) = unlines $ (g <> " " <> pretty s) : map ((" - " <>) . pretty) ss
 
 instance Pretty StartDate where
@@ -96,9 +80,8 @@ instance Pretty StartDate where
     StartingWithYear y n -> "Starting with year " <> maybe [y] pretty n <> ":"
     StartingWithDate -> "Starting with date:"
 
-instance Pretty f => Pretty (StepF f) where
-  pretty :: StepF f -> String
-  pretty (StepF d v e) = unwords [d, [v], "=", pretty e]
+instance Pretty Step where
+  pretty (Step d _ e) = unwords [d, pretty e]
 
 ---------------------------------------------------------------------
 -- Builder
@@ -117,13 +100,13 @@ startingWithYear y b = PartStartYear y $ b (EVar y)
 
 step :: String -> Char -> Expression -> State Part Expression
 step description variable expression = do
-  modify $ \p -> p { steps = Step description variable expression : steps p }
+  modify $ \p -> p { steps = Step description variable (EVar variable :== EqRes expression) : steps p }
   pure (EVar variable)
 
 note :: String -> Expression -> State Part ()
 note description expression = case expression of
-  EVar variable -> modify $ \p -> p { steps = Step description variable expression : p.steps }
-  _ -> error $ "Expected note to take variable from previos step, instead got: " <> show expression
+  EVar variable -> modify $ \p -> p { steps = Step description variable (EqRes expression) : p.steps }
+  _ -> error $ "Expected note to take variable from previous step, instead got: " <> show expression
 
 ---------------------------------------------------------------------
 -- Evaluation
@@ -131,16 +114,16 @@ note description expression = case expression of
 
 type Var = (Char, Expression)
 
-evalExplanation :: Date -> Explanation -> ExplanationF [Expression]
+evalExplanation :: Date -> Explanation -> Explanation
 evalExplanation d expl = snd . flip runState [] $ evalExplanationS d expl
 
-evalExplanationS :: Date -> Explanation -> State [Var] (ExplanationF [Expression])
+evalExplanationS :: Date -> Explanation -> State [Var] Explanation
 evalExplanationS d expl = do
   nParts <- mapM (evalPart d) expl.parts
   result <- toEnum . eval [] . snd . headVars "explanation" <$> get 
   pure $ expl { parts = nParts, result = Just result }  
 
-evalPart :: Date -> Part -> State [Var] (PartF [Expression])
+evalPart :: Date -> Part -> State [Var] Part
 evalPart d p = do
   (pVars, nStart) <- evalStart d p.startDate
   let (nvars, nss) = flip runState pVars $ mapM evalStep p.steps
@@ -160,11 +143,12 @@ evalStart d s = do
     StartingWithYear y _ -> ((y, fromIntegral d.year) : vars, StartingWithYear y (Just d.year))
     StartingWithDate -> (vars, s)
 
-evalStep :: Step -> State [Var] (StepF [Expression])
+evalStep :: Step -> State [Var] Step
 evalStep s = do
   vars <- get
-  let e = expression s
-  let se = substitute vars e
-  let ese = EConst $ eval [] se
-  modify $ (:) (s.variable, ese)
-  pure s { expression = [e, se, ese] }
+  let e = s.equation
+  let ex = eqResult e
+  let sex = substitute vars ex
+  let esex = EConst $ eval [] sex
+  modify $ (:) (s.variable, esex)
+  pure s { equation = uniq $ e `eqConcat` (sex :== EqRes esex) }

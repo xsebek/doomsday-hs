@@ -1,5 +1,5 @@
 Find the year anchor. Starting with year Y:
- - note the century anchor A = A
+ - note the century anchor A
  - take the last two digits T = Y % 100
  - the resulting increment is I = T + T / 4
  - add the century anchor to get W = A + I

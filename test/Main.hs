@@ -27,6 +27,7 @@ tests = testGroup "Unit tests"
   , daysFromToTests
   , expressionTests
   , explanationTests
+  , equationTests
   ]
 
 isLeapYearTests :: TestTree
@@ -149,6 +150,13 @@ explanationTests = testGroup "Explanations"
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a, IsString s) => a -> IO s
   prettyIO = pure . fromString . pretty
+
+equationTests :: TestTree
+equationTests = testGroup "Equations"
+  [ testCase "uniq res" $ uniq (EqRes 1) @?= EqRes 1
+  , testCase "uniq eq var" $ uniq (EVar 'x' :== EqRes (EVar 'x')) @?= (EqRes $ EVar 'x')
+  , testCase "uniq neq var" $ uniq (EVar 'x' :== EqRes (EVar 'y')) @?= (EVar 'x' :== EqRes (EVar 'y'))
+  ]
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances

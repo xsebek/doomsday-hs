@@ -10,7 +10,6 @@ import Data.Time.Doomsday.DayOfWeek
 import Data.Time.Doomsday.String.Pretty
 import Data.Foldable (find)
 import Data.Maybe (fromMaybe)
-import Data.List (intercalate)
 
 data Expression
   = EConst Int
@@ -66,10 +65,6 @@ instance Pretty Expression where
       EMul e1 e2 -> b p 3 $ go 3 e1 <> " * " <> go 3 e2
       EDiv e1 e2 -> b p 3 $ go 3 e1 <> " / " <> go 3 e2
       EMod e1 e2 -> b p 3 $ go 3 e1 <> " % " <> go 3 e2
-
-instance Pretty [Expression] where
-  pretty :: [Expression] -> String
-  pretty = intercalate " = " . map pretty
 
 instance Num Expression where
   (+) :: Expression -> Expression -> Expression
