@@ -1,0 +1,5 @@
+Find the year anchor. Starting with year 2026:
+ - note the century anchor A = A = Tuesday = 2
+ - take the last two digits T = Y % 100 = 2026 % 100 = 26
+ - the resulting increment is I = T + T / 4 = 26 + 26 / 4 = 32
+ - add the century anchor to get W = A + I = 2 + 32 = 34

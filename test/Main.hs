@@ -130,14 +130,23 @@ expressionTests = testGroup "Expressions"
 
 explanationTests :: TestTree
 explanationTests = testGroup "Explanations"
-  [ testCase "Part builder returns result variable" $ centuryVar @?= EVar 'A'
-  , goldenVsString "Pretty abstract explanation" "test/data/century_abstract.golden" $
+  [ testCase "Part builder returns result variable" $ do
+    centuryVar @?= EVar 'A'
+    yearVar @?= EVar 'W'
+  , goldenVsString "Pretty abstract century explanation" "test/data/century_abstract.golden" $
       prettyIO centuryExpl
-  , goldenVsString "Pretty evaluated explanation" "test/data/century_evaluated.golden" $
-      prettyIO (evalExplanation (Date 2026 02 27) centuryExpl)
+  , goldenVsString "Pretty evaluated century explanation" "test/data/century_evaluated.golden" $
+      prettyIO (evalExplanation d centuryExpl)
+  , goldenVsString "Pretty abstract year explanation" "test/data/year_abstract.golden" $
+      prettyIO yearExpl
+  , goldenVsString "Pretty evaluated year explanation" "test/data/year_evaluated.golden" $
+      prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl)
   ]
  where
+  d = Date 2026 02 27
   (centuryExpl, centuryVar) = runState findCenturyAnchor $ Explanation [] Nothing Nothing
+  (yearExpl, yearVar) = runState (findYearAnchor centuryVar) $ Explanation [] Nothing Nothing
+  evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a, IsString s) => a -> IO s
   prettyIO = pure . fromString . pretty
 

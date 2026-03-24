@@ -12,11 +12,13 @@ module Data.Time.Doomsday.Explanation (
     Step,
     -- * Build explanation
     PartBuilder,
-    step,
     part,
     startingWithYear,
+    step,
+    note,
     -- * Evaluate explanation
     evalExplanation,
+    evalExplanationS,
 ) where
 
 import Data.List (intercalate, singleton)
@@ -99,7 +101,7 @@ instance Pretty f => Pretty (StepF f) where
   pretty (StepF d v e) = unwords [d, [v], "=", pretty e]
 
 ---------------------------------------------------------------------
--- Functions
+-- Builder
 ---------------------------------------------------------------------
 
 part :: String -> PartBuilder -> State Explanation Expression
@@ -114,27 +116,40 @@ startingWithYear :: Char -> (Expression -> State Part Expression) -> PartBuilder
 startingWithYear y b = PartStartYear y $ b (EVar y)
 
 step :: String -> Char -> Expression -> State Part Expression
-step description variable expression = State $ \p ->
-  (p { steps = Step description variable expression : steps p }, EVar variable)
+step description variable expression = do
+  modify $ \p -> p { steps = Step description variable expression : steps p }
+  pure (EVar variable)
+
+note :: String -> Expression -> State Part ()
+note description expression = case expression of
+  EVar variable -> modify $ \p -> p { steps = Step description variable expression : p.steps }
+  _ -> error $ "Expected note to take variable from previos step, instead got: " <> show expression
+
+---------------------------------------------------------------------
+-- Evaluation
+---------------------------------------------------------------------
 
 type Var = (Char, Expression)
 
 evalExplanation :: Date -> Explanation -> ExplanationF [Expression]
-evalExplanation d expl = expl { parts = nParts, result = Just result }
- where
-  (nVars, nParts) = flip runState [] $ mapM (evalPart d) expl.parts
-  result = toEnum . eval [] . snd $ fromVars "explanation" nVars 
+evalExplanation d expl = snd . flip runState [] $ evalExplanationS d expl
+
+evalExplanationS :: Date -> Explanation -> State [Var] (ExplanationF [Expression])
+evalExplanationS d expl = do
+  nParts <- mapM (evalPart d) expl.parts
+  result <- toEnum . eval [] . snd . headVars "explanation" <$> get 
+  pure $ expl { parts = nParts, result = Just result }  
 
 evalPart :: Date -> Part -> State [Var] (PartF [Expression])
 evalPart d p = do
   (pVars, nStart) <- evalStart d p.startDate
   let (nvars, nss) = flip runState pVars $ mapM evalStep p.steps
-  let result = fromVars "part" nvars
+  let result = headVars "part" nvars
   modify $ (:) result
   pure p { steps = nss, startDate = nStart }
 
-fromVars :: String -> [Var] -> Var
-fromVars n = \case
+headVars :: String -> [Var] -> Var
+headVars n = \case
   (r:_) -> r
   [] -> error $ "cannot eval empty " <> n
 
