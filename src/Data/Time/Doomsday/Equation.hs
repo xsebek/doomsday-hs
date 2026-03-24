@@ -44,12 +44,16 @@ eqResult eq = case eqToEither eq of
 uniq :: Equation -> Equation
 uniq = \case
   e | Left (e1, _, EqRes e2) <- eqToEither e
-        -> if e1 == e2 then EqRes e1 else e
+        -> if isSame e1 e2 then EqRes e1 else e
     | Left (e1, eOp1, eq2) <- eqToEither e
     , Left (e2, eOp2, eq3) <- eqToEither eq2
-        -> if e1 == e2 then uniq $ e1 `eOp2` eq3 else e1 `eOp1` uniq eq2
+        -> if isSame e1 e2 then uniq $ e1 `eOp2` eq3 else e1 `eOp1` uniq eq2
     | otherwise
         -> e
+
+isSame :: Expression -> Expression -> Bool
+isSame (EDay d) (EConst i) = fromEnum d == i
+isSame e1 e2 = e1 == e2
 
 class IsEquation a where
     toEquation :: a -> Equation

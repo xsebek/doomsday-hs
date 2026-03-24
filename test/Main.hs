@@ -15,6 +15,8 @@ import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
 import Test.Tasty.Golden
 import Data.String (fromString, IsString)
+import Data.ByteString.Builder
+import qualified Data.ByteString.Lazy as BS
 
 main :: IO ()
 main = defaultMain tests
@@ -148,8 +150,8 @@ explanationTests = testGroup "Explanations"
   (centuryExpl, centuryVar) = runState findCenturyAnchor $ Explanation [] Nothing Nothing
   (yearExpl, yearVar) = runState (findYearAnchor centuryVar) $ Explanation [] Nothing Nothing
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
-  prettyIO :: (Pretty a, IsString s) => a -> IO s
-  prettyIO = pure . fromString . pretty
+  prettyIO :: (Pretty a) => a -> IO BS.ByteString
+  prettyIO = pure . toLazyByteString . mconcat . map charUtf8 . pretty
 
 equationTests :: TestTree
 equationTests = testGroup "Equations"

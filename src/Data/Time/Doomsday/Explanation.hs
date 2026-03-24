@@ -12,6 +12,7 @@ module Data.Time.Doomsday.Explanation (
     part,
     startingWithYear,
     step,
+    stepI,
     note,
     -- * Evaluate explanation
     evalExplanation,
@@ -50,8 +51,11 @@ data StartDate
 data Step = Step
   { description :: String
   , variable :: Char
+  , variableType :: VarType
   , equation :: Equation
   }
+
+data VarType = VDay | VInt
 
 data PartBuilder 
   = PartStartYear Char (State Part Expression)
@@ -81,7 +85,8 @@ instance Pretty StartDate where
     StartingWithDate -> "Starting with date:"
 
 instance Pretty Step where
-  pretty (Step d _ e) = unwords [d, pretty e]
+  pretty :: Step -> String
+  pretty s = unwords [s.description, pretty s.equation]
 
 ---------------------------------------------------------------------
 -- Builder
@@ -99,13 +104,20 @@ startingWithYear :: Char -> (Expression -> State Part Expression) -> PartBuilder
 startingWithYear y b = PartStartYear y $ b (EVar y)
 
 step :: String -> Char -> Expression -> State Part Expression
-step description variable expression = do
-  modify $ \p -> p { steps = Step description variable (EVar variable :== EqRes expression) : steps p }
+step = stepG VDay
+
+stepI :: String -> Char -> Expression -> State Part Expression
+stepI = stepG VInt
+
+stepG :: VarType -> String -> Char -> Expression -> State Part Expression
+stepG typ description variable expression = do
+  let s = Step description variable typ (variable ^== expression)
+  modify $ \p -> p { steps = s : steps p }
   pure (EVar variable)
 
 note :: String -> Expression -> State Part ()
 note description expression = case expression of
-  EVar variable -> modify $ \p -> p { steps = Step description variable (EqRes expression) : p.steps }
+  EVar variable -> modify $ \p -> p { steps = Step description variable VDay (EqRes expression) : p.steps }
   _ -> error $ "Expected note to take variable from previous step, instead got: " <> show expression
 
 ---------------------------------------------------------------------
@@ -149,6 +161,7 @@ evalStep s = do
   let e = s.equation
   let ex = eqResult e
   let sex = substitute vars ex
-  let esex = EConst $ eval [] sex
-  modify $ (:) (s.variable, esex)
-  pure s { equation = uniq $ e ^== sex ^== esex }
+  let esex = eval [] sex
+  let tesex = case s.variableType of VInt -> EConst esex; VDay -> EDay (toEnum esex)
+  modify $ (:) (s.variable, tesex)
+  pure s { equation = uniq $ e ^== sex ^== esex ^=== tesex }
