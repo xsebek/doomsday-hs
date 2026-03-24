@@ -154,8 +154,8 @@ explanationTests = testGroup "Explanations"
 equationTests :: TestTree
 equationTests = testGroup "Equations"
   [ testCase "uniq res" $ uniq (EqRes 1) @?= EqRes 1
-  , testCase "uniq eq var" $ uniq (EVar 'x' :== EqRes (EVar 'x')) @?= (EqRes $ EVar 'x')
-  , testCase "uniq neq var" $ uniq (EVar 'x' :== EqRes (EVar 'y')) @?= (EVar 'x' :== EqRes (EVar 'y'))
+  , testCase "uniq same var" $ uniq ('x' ^== 'x') @?= toEquation 'x'
+  , testCase "uniq diff var" $ uniq ('x' ^== 'y') @?= ('x' ^== 'y')
   ]
 
 -- -----------------------------------------------------------------

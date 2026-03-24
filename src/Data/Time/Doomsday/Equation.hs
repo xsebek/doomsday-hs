@@ -1,8 +1,11 @@
 module Data.Time.Doomsday.Equation (
   Equation (..),
   eqResult,
-  eqConcat,
   uniq,
+
+  IsEquation (..),
+  (^==),
+  (^===),
 ) where
 
 import Data.Time.Doomsday.Expression
@@ -24,12 +27,6 @@ instance Pretty Equation where
       e :== eq -> pretty e <> " = " <> pretty eq
       e :=== eq -> pretty e <> " ≡ " <> pretty eq
 
-eqConcat :: Equation -> Equation -> Equation
-eqConcat e1 e2 = case e1 of
-  EqRes r -> r :== e2
-  ex1 :== e -> ex1 :== eqConcat e e2
-  ex1 :=== e -> ex1 :=== eqConcat e e2
-
 eqResult :: Equation -> Expression
 eqResult = \case
   EqRes r -> r
@@ -47,3 +44,28 @@ uniq = \case
     EqRes _ -> Nothing
     e :== eq -> Just (e, eq)
     e :=== eq -> Just (e, eq)
+
+class IsEquation a where
+    toEquation :: a -> Equation
+
+instance IsEquation Equation where toEquation = id
+instance IsEquation Expression where toEquation = EqRes
+instance IsEquation Char where toEquation = EqRes . EVar
+
+(^==) :: (IsEquation a, IsEquation b) => a -> b -> Equation
+a ^== b = toEquation a `eqConcat` toEquation b
+
+(^===) :: (IsEquation a, IsEquation b) => a -> b -> Equation
+a ^=== b = toEquation a `equivConcat` toEquation b
+
+eqConcat :: Equation -> Equation -> Equation
+eqConcat e1 e2 = case e1 of
+  EqRes r -> r :== e2
+  ex1 :== e -> ex1 :== eqConcat e e2
+  ex1 :=== e -> ex1 :=== eqConcat e e2
+
+equivConcat :: Equation -> Equation -> Equation
+equivConcat e1 e2 = case e1 of
+  EqRes r -> r :== e2
+  ex1 :== e -> ex1 :== eqConcat e e2
+  ex1 :=== e -> ex1 :=== eqConcat e e2

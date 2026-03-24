@@ -151,4 +151,4 @@ evalStep s = do
   let sex = substitute vars ex
   let esex = EConst $ eval [] sex
   modify $ (:) (s.variable, esex)
-  pure s { equation = uniq $ e `eqConcat` (sex :== EqRes esex) }
+  pure s { equation = uniq $ e ^== sex ^== esex }

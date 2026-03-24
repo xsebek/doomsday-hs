@@ -7,6 +7,7 @@ module Data.Time.Doomsday (
   module M,
   module W,
   module Expression,
+  module Equation,
   module Explanation,
 
   Pretty(..),
@@ -17,6 +18,7 @@ import Data.Time.Doomsday.Date as D
 import Data.Time.Doomsday.Year as Y
 import Data.Time.Doomsday.Month as M
 import Data.Time.Doomsday.DayOfWeek as W
+import Data.Time.Doomsday.Equation as Equation
 import Data.Time.Doomsday.Explanation as Explanation
 import Data.Time.Doomsday.Expression as Expression
 import Data.Time.Doomsday.State.Simple (State (..))
