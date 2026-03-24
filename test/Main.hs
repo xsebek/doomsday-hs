@@ -27,8 +27,8 @@ tests = testGroup "Unit tests"
   , dayOfWeekTests
   , daysFromToTests
   , expressionTests
-  , explanationTests
   , equationTests
+  , explanationTests
   ]
 
 isLeapYearTests :: TestTree
@@ -130,6 +130,14 @@ expressionTests = testGroup "Expressions"
     pretty e @?= pret
   expression = expressionWithVars []
 
+equationTests :: TestTree
+equationTests = testGroup "Equations"
+  [ testCase "uniq res" $ uniq (EqRes 1) @?= EqRes 1
+  , testCase "uniq same var" $ uniq ('x' ^== 'x') @?= toEquation 'x'
+  , testCase "uniq diff var" $ uniq ('x' ^== 'y') @?= ('x' ^== 'y')
+  , testCase "lift equiv" $ ('x' ^== (2 :: Int) ^=== Tuesday) @?= (EVar 'x' :== EConst 2 :=== EqRes (EDay Tuesday))
+  ]
+
 explanationTests :: TestTree
 explanationTests = testGroup "Explanations"
   [ testCase "Part builder returns result variable" $ do
@@ -151,14 +159,6 @@ explanationTests = testGroup "Explanations"
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a) => a -> IO BS.ByteString
   prettyIO = pure . toLazyByteString . mconcat . map charUtf8 . pretty
-
-equationTests :: TestTree
-equationTests = testGroup "Equations"
-  [ testCase "uniq res" $ uniq (EqRes 1) @?= EqRes 1
-  , testCase "uniq same var" $ uniq ('x' ^== 'x') @?= toEquation 'x'
-  , testCase "uniq diff var" $ uniq ('x' ^== 'y') @?= ('x' ^== 'y')
-  , testCase "lift equiv" $ ('x' ^== (2 :: Int) ^=== Tuesday) @?= (EVar 'x' :== EConst 2 :=== EqRes (EDay Tuesday))
-  ]
 
 -- -----------------------------------------------------------------
 -- Arbitrary instances
