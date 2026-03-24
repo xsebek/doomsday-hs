@@ -7,6 +7,7 @@ module Data.Time.Doomsday.Date (
 
 import Data.Time.Doomsday.Month
 import Data.Time.Doomsday.Year
+import Data.Time.Doomsday.String.Pretty
 
 data Date = Date
   { year :: Year
@@ -14,6 +15,10 @@ data Date = Date
   , day :: Int
   }
   deriving (Eq, Ord, Show)
+
+instance Pretty Date where
+  pretty :: Date -> String
+  pretty (Date y m d) = unwords [show d, show m, show y]
 
 daysFromTo :: Date -> Date -> Int
 daysFromTo a b =

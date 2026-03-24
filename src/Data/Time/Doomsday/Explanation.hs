@@ -11,9 +11,11 @@ module Data.Time.Doomsday.Explanation (
     PartBuilder,
     part,
     startingWithYear,
+    startingWithDate,
     step,
     stepI,
     note,
+    noteI,
     -- * Evaluate explanation
     evalExplanation,
     evalExplanationS,
@@ -46,7 +48,7 @@ data Part = Part
 
 data StartDate
   = StartingWithYear Char (Maybe Year)
-  | StartingWithDate
+  | StartingWithDate Char Char (Maybe Date)
 
 data Step = Step
   { description :: String
@@ -59,6 +61,7 @@ data VarType = VDay | VInt
 
 data PartBuilder 
   = PartStartYear Char (State Part Expression)
+  | PartStartDate Char Char (State Part Expression)
 
 ---------------------------------------------------------------------
 -- Pretty
@@ -82,7 +85,7 @@ instance Pretty StartDate where
   pretty :: StartDate -> String
   pretty = \case
     StartingWithYear y n -> "Starting with year " <> maybe [y] pretty n <> ":"
-    StartingWithDate -> "Starting with date:"
+    StartingWithDate d _o mDate -> "Starting with date " <> maybe [d] pretty mDate <> ":"
 
 instance Pretty Step where
   pretty :: Step -> String
@@ -97,11 +100,17 @@ part goal = \case
   (PartStartYear y (State f)) -> State $ \expl ->
     case f (Part goal (StartingWithYear y Nothing) []) of
       (p, e) -> (expl { parts = rs p : parts expl }, e)
+  (PartStartDate d o (State f)) -> State $ \expl ->
+    case f (Part goal (StartingWithDate d o Nothing) []) of
+      (p, e) -> (expl { parts = rs p : parts expl }, e)
  where
   rs p = p { steps = reverse p.steps }
 
 startingWithYear :: Char -> (Expression -> State Part Expression) -> PartBuilder
 startingWithYear y b = PartStartYear y $ b (EVar y)
+
+startingWithDate :: Char -> Char -> (Expression -> Expression -> State Part Expression) -> PartBuilder
+startingWithDate d o b = PartStartDate d o $ b (EVar d) (EVar o)
 
 step :: String -> Char -> Expression -> State Part Expression
 step = stepG VDay
@@ -115,9 +124,18 @@ stepG typ description variable expression = do
   modify $ \p -> p { steps = s : steps p }
   pure (EVar variable)
 
-note :: String -> Expression -> State Part ()
-note description expression = case expression of
-  EVar variable -> modify $ \p -> p { steps = Step description variable VDay (EqRes expression) : p.steps }
+note :: String -> Expression -> State Part Expression
+note = noteG VDay
+
+noteI :: String -> Expression -> State Part Expression
+noteI = noteG VInt
+
+noteG :: VarType -> String -> Expression -> State Part Expression
+noteG typ description expression = case expression of
+  EVar variable -> do
+    let s = Step description variable typ (EqRes expression)
+    modify $ \p -> p { steps = s : p.steps }
+    pure expression
   _ -> error $ "Expected note to take variable from previous step, instead got: " <> show expression
 
 ---------------------------------------------------------------------
@@ -152,8 +170,12 @@ evalStart :: Date -> StartDate -> State [Var] ([Var], StartDate)
 evalStart d s = do
   vars <- get
   pure $ case s of
-    StartingWithYear y _ -> ((y, fromIntegral d.year) : vars, StartingWithYear y (Just d.year))
-    StartingWithDate -> (vars, s)
+    StartingWithYear vy _ -> (year vy : vars, StartingWithYear vy (Just d.year))
+    StartingWithDate vd vo _ -> (day vd : doom vo : vars, StartingWithDate vd vo (Just d))
+ where
+  year vy = (vy, fromIntegral d.year)
+  day vd = (vd, fromIntegral d.day)
+  doom vo = (vo, error "TODO: closest doomsday")
 
 evalStep :: Step -> State [Var] Step
 evalStep s = do
