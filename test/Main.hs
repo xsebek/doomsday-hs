@@ -14,7 +14,6 @@ import Control.Monad (forM_)
 import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
 import Test.Tasty.Golden
-import Data.String (fromString, IsString)
 import Data.ByteString.Builder
 import qualified Data.ByteString.Lazy as BS
 
@@ -119,7 +118,7 @@ expressionTests = testGroup "Expressions"
   , expression "1 - 2" (1 - 2) (-1)
   , expression "3 * 3" (3 * 3) 9
   , expression "12 / 4" (12 `div` 4) 3
-  , expression "1 + 2 * 3" (1 + (2 * 3)) 7
+  , expression "1 + 2*3" (1 + (2 * 3)) 7
   , expression "(1 + 2) * 3" ((1 + 2) * 3) 9 
   , expression "8 % 7" (8 `mod` 7) 1
   , expression "(4 + 5) % 7" ((4 + 5) `mod` 7) 2

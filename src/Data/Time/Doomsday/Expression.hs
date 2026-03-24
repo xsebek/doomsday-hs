@@ -52,19 +52,22 @@ instance Pretty Expression where
   pretty :: Expression -> String
   pretty = go 12
    where
-    b :: Int -> Int -> String -> String
-    b pOut pIn s = if pOut <= pIn then "(" <> s <> ")" else s
+    paren :: Int -> Int -> String -> String
+    paren pOut pIn s = if pOut <= pIn then "(" <> s <> ")" else s
+    form pOut pIn e1 o e2 =
+      let s = if pOut > pIn && pOut < 12 then "" else " "
+      in paren pOut pIn $ go pIn e1 <> s <> o <> s <> go pIn e2
     go :: Int -> Expression -> String
     go p = \case
       EConst i -> show i
       EDay d -> show d
       EVar v -> [v]
-      ENeg e1 -> b p 4 $ "-" <> go 4 e1
-      EAdd e1 (ENeg e2) -> b p 4 $ go 4 e1 <> " - " <> go 4 e2    
-      EAdd e1 e2 -> b p 4 $ go 4 e1 <> " + " <> go 4 e2
-      EMul e1 e2 -> b p 3 $ go 3 e1 <> " * " <> go 3 e2
-      EDiv e1 e2 -> b p 3 $ go 3 e1 <> " / " <> go 3 e2
-      EMod e1 e2 -> b p 3 $ go 3 e1 <> " % " <> go 3 e2
+      ENeg e1 -> paren p 4 $ "-" <> go 4 e1
+      EAdd e1 (ENeg e2) -> form p 4 e1 "-" e2    
+      EAdd e1 e2 -> form p 4 e1 "+" e2
+      EMul e1 e2 -> form p 3 e1 "*" e2
+      EDiv e1 e2 -> form p 3 e1 "/" e2
+      EMod e1 e2 -> form p 3 e1 "%" e2
 
 instance Num Expression where
   (+) :: Expression -> Expression -> Expression
