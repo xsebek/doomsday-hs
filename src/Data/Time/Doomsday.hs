@@ -1,4 +1,5 @@
 module Data.Time.Doomsday (
+  doomsdayExplanation,
   findCenturyAnchor,
   findYearAnchor,
   findWeekday,
@@ -24,6 +25,12 @@ import Data.Time.Doomsday.Explanation as Explanation
 import Data.Time.Doomsday.Expression as Expression
 import Data.Time.Doomsday.State.Simple (State (..))
 import Data.Time.Doomsday.String.Pretty as Pretty
+
+doomsdayExplanation :: Explanation
+doomsdayExplanation = explanation $ do
+  a <- findCenturyAnchor
+  w <- findYearAnchor a
+  findWeekday w
 
 findCenturyAnchor :: State Explanation Expression
 findCenturyAnchor =

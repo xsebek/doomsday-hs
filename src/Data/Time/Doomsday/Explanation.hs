@@ -8,6 +8,7 @@ module Data.Time.Doomsday.Explanation (
     Part (..),
     Step (..),
     -- * Build explanation
+    explanation,
     PartBuilder,
     part,
     startingWithYear,
@@ -94,6 +95,11 @@ instance Pretty Step where
 ---------------------------------------------------------------------
 -- Builder
 ---------------------------------------------------------------------
+
+explanation :: State Explanation a -> Explanation
+explanation sExpl = r . fst . runState sExpl $ Explanation [] Nothing Nothing
+ where
+  r e = e { parts = reverse e.parts }
 
 part :: String -> PartBuilder -> State Explanation Expression
 part goal = \case
