@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 module Data.Time.Doomsday (
   doomsdayExplanation,
   findCenturyAnchor,
@@ -11,6 +12,7 @@ module Data.Time.Doomsday (
   module Expression,
   module Equation,
   module Explanation,
+  module Mnemonic,
 
   Pretty(..),
   State (..),
@@ -23,6 +25,7 @@ import Data.Time.Doomsday.DayOfWeek as W
 import Data.Time.Doomsday.Equation as Equation
 import Data.Time.Doomsday.Explanation as Explanation
 import Data.Time.Doomsday.Expression as Expression
+import Data.Time.Doomsday.Mnemonic as Mnemonic
 import Data.Time.Doomsday.State.Simple (State (..))
 import Data.Time.Doomsday.String.Pretty as Pretty
 

@@ -6,16 +6,17 @@ module Main (main) where
 import Data.Time.Doomsday
 import Test.Tasty
 import Test.Tasty.HUnit
+import Test.Tasty.Golden
+import Test.Tasty.QuickCheck
 import Data.Time qualified as Time
 import Data.Time.Calendar.Month qualified as Time
-import Test.Tasty.QuickCheck
+import Data.Time.Calendar.MonthDay qualified as Time
 import Data.Function ((&))
 import Control.Monad (forM_)
-import qualified Data.Time.Calendar.MonthDay as Time
 import Data.Enum (enumerate)
-import Test.Tasty.Golden
 import Data.ByteString.Builder
-import qualified Data.ByteString.Lazy as BS
+import Data.ByteString.Lazy qualified as BS
+import Data.List (isInfixOf)
 
 main :: IO ()
 main = defaultMain tests
@@ -26,6 +27,7 @@ tests = testGroup "Unit tests"
   , monthTests
   , dayOfWeekTests
   , daysFromToTests
+  , mnemonicTests
   , expressionTests
   , equationTests
   , explanationTests
@@ -106,6 +108,29 @@ daysFromToTests = testGroup "Date distance tests"
   ]
  where
   toDate (Time.YearMonthDay y m d) = Date y (toEnum m) d
+
+mnemonicTests :: TestTree
+mnemonicTests = testGroup "Mnemonics"
+  [ testCase "Default mnemonic has all months" . forM_ enumerate $ \isLeap -> forM_ allMonths $ \m ->
+    let mnms = fst <$> mnMonths isLeap
+    in assertBool ("There should be a mnemonic for " <> show m) (m `elem` mnms)
+  , testCase "Default mnemonic is correctly on doomsday" . forM_ [2024, 2025] $ \y -> do
+    let mkTime (m, d) = Time.YearMonthDay y (fromEnum m) d
+    let ds = map mkTime . filter ((/= March) . fst) $ mnMonths (isLeapYear y)
+    let expected = if y == 2024 then Time.Thursday else Time.Friday
+    forM_ ds $ \d -> assertEqual ("Expected " <> show d <> " to fall on " <> show expected) expected $ Time.dayOfWeek d
+  , testGroup "Closest doomsday"
+    [ testCase "closest to doomsday is doomsday" $ do
+      let doom = Date 2026 02 28
+      let (mn, d) = closestDoomsday defaultMnemonics doom
+      d @?= doom
+      assertBool "should mention last Feb" $ "last" `isInfixOf` mn
+    , testCase "day before doomsday" $ snd (closestDoomsday defaultMnemonics $ Date 2026 02 27) @?= Date 2026 02 28
+    , testCase "day after doomsday" $ snd (closestDoomsday defaultMnemonics $ Date 2026 03 01) @?= Date 2026 03 00
+    ]
+  ]
+ where
+  mnMonths isLeap = concatMap dates (defaultMnemonics `forLeapYear` isLeap)
 
 expressionTests :: TestTree
 expressionTests = testGroup "Expressions"
