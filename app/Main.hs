@@ -1,12 +1,20 @@
 module Main (main) where
 
-import Data.Time.Doomsday (isLeapYear)
+import Data.Time.Doomsday
+import System.Environment (getArgs)
+import Control.Monad
+import System.IO (hPutStrLn, stderr)
+import Data.Time qualified as Time
 
 main :: IO ()
 main = do
-  putStrLn "Is 2026 a leap year?"
-  print $ isLeapYear 2026
-  putStrLn "Is 2024 a leap year?"
-  print $ isLeapYear 2024
-  putStrLn "Is 2000 a leap year?"
-  print $ isLeapYear 2000
+  args <- getArgs
+  today <- Time.localDay . Time.zonedTimeToLocalTime <$> Time.getZonedTime
+  case args of
+    [] -> hPutStrLn stderr $ "Empty aruments, expected date YYYY-MM-DD"
+    _ -> forM_ args $ \a -> case readYMD a of
+      Nothing -> hPutStrLn stderr $ "Cannot parse date '" <> a <> "', expected YYYY-MM-DD"
+      Just d -> putStrLn . pretty $ evalExplanation d doomsdayExplanation {relativeTo = Just $ toTime d `compare` today }
+
+toTime :: Date -> Time.Day
+toTime (Date y m d) = Time.YearMonthDay y (fromEnum m) d

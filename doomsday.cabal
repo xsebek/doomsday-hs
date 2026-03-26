@@ -104,7 +104,8 @@ executable doomsday
     -- Other library packages from which modules are imported.
     build-depends:
         base ^>=4.22.0.0,
-        doomsday
+        doomsday,
+        time,
 
     -- Directories containing source files.
     hs-source-dirs:   app
