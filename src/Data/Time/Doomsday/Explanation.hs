@@ -30,6 +30,7 @@ import Data.Time.Doomsday.Expression
 import Data.Time.Doomsday.State.Simple
 import Data.Time.Doomsday.String.Pretty
 import Data.Time.Doomsday.Year
+import Data.Time.Doomsday.Mnemonic (closestDoomsday, defaultMnemonics)
 
 ---------------------------------------------------------------------
 -- DATA
@@ -181,7 +182,7 @@ evalStart d s = do
  where
   year vy = (vy, fromIntegral d.year)
   day vd = (vd, fromIntegral d.day)
-  doom vo = (vo, error "TODO: closest doomsday")
+  doom vo = (vo, fromIntegral $ (snd $ closestDoomsday defaultMnemonics d).day)
 
 evalStep :: Step -> State [Var] Step
 evalStep s = do

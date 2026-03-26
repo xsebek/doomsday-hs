@@ -178,8 +178,12 @@ explanationTests = testGroup "Explanations"
       prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl)
   , goldenVsString "Pretty abstract weekday explanation" "test/data/week_abstract.golden" $
       prettyIO weekExpl
+  , goldenVsString "Pretty evaluated weekday explanation" "test/data/week_evaluated.golden" $
+      prettyIO (evalExplanationWith [('W', EDay Saturday)] weekExpl)
   , goldenVsString "Pretty abstract whole explanation" "test/data/whole_abstract.golden" $
       prettyIO doomsdayExplanation
+  , goldenVsString "Pretty evaluated whole explanation" "test/data/whole_evaluated.golden" $
+      prettyIO (evalExplanation d doomsdayExplanation) { relativeTo = Just EQ }
   ]
  where
   d = Date 2026 02 27
