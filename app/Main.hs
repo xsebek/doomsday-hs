@@ -90,7 +90,7 @@ randomDate dr (Date ty tm td) = do
   c <- randomDateR Alltime (16, 21) (ty `div` 100)
   i <- randomDateR Century (0, 99) (ty `mod` 100)
   let y = c * 100 + i
-  m <- randomDateR Century (0, 12) tm
+  m <- randomDateR Year (0, 12) tm
   let maxD = monthLength (isLeapYear y) m
   d <- randomDateR Month (0, maxD) td
   pure $ Date y m d
