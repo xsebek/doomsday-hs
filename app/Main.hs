@@ -82,7 +82,6 @@ training r = today >>= runInputT defaultSettings . loop . fromTime
           outputErrLn "Type the day of week as digit or name prefix, or type quit/Ctrl+D"
           run date expl
         Right w -> do
-          -- TODO: add correct/wrong field inside explanation.
           let correct = Just w == expl.result
           outputPrettyLn $ verboseExpl q expl { correct = Just correct }
           return True
