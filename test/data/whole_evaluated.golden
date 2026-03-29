@@ -12,8 +12,8 @@ Find the year anchor. Starting with year 2026:
 
 Find the weekday. Starting with date 27 February 2026:
  - note the year anchor W = Saturday
- - this months doomsday is O = 28
+ - this months doomsday is O = 28 (the last day of February)
  - the resulting increment is I = D - O = 27 - 28 = -1 ≡ Saturday
  - add the year anchor to get R = W + I = Saturday + Saturday = 12 ≡ Friday
 
-The weekday is Friday
+The weekday is Friday.

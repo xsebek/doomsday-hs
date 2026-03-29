@@ -58,6 +58,7 @@ data Step = Step
   , variable :: Char
   , variableType :: VarType
   , equation :: Equation
+  , mnemonic :: Maybe String
   }
 
 data VarType = VDay | VInt
@@ -74,13 +75,13 @@ instance Pretty Explanation where
   format expl = FmtParagraphs $ map format expl.parts <> res
    where
     res = case (expl.relativeTo, expl.result) of
-      (Just o, Just r) -> [guess <> "The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
+      (Just o, Just r) -> [guess <+> "The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
       _ -> []
     guess = case (,) <$> expl.result <*> expl.response of
       Nothing -> ""
       Just (r,d) -> if r == d
-        then FmtAnn Success (format d) <+> "is correct! "
-        else FmtAnn Failure (format d) <+> "is wrong! "
+        then FmtAnn Success (format d) <+> "is correct!"
+        else FmtAnn Failure (format d) <+> "is wrong!"
 
 instance Pretty Part where
   format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (map format ss)
@@ -94,7 +95,11 @@ instance Pretty StartDate where
     inputFmt var f = FmtAnn Input $ maybe (FmtStr [var]) format f
 
 instance Pretty Step where
-  format s = format s.description <+> format s.equation
+  format s = format s.description <+> format s.equation <+> mn
+   where
+    mn = case s.mnemonic of
+      Nothing -> ""
+      Just m -> "(" <> format m <> ")"
 
 ---------------------------------------------------------------------
 -- Builder
@@ -130,7 +135,7 @@ stepI = stepG VInt
 
 stepG :: VarType -> String -> Char -> Expression -> State Part Expression
 stepG typ description variable expression = do
-  let s = Step description variable typ (variable ^== expression)
+  let s = Step description variable typ (variable ^== expression) Nothing
   modify $ \p -> p { steps = s : steps p }
   pure (EVar variable)
 
@@ -143,7 +148,7 @@ noteI = noteG VInt
 noteG :: VarType -> String -> Expression -> State Part Expression
 noteG typ description expression = case expression of
   EVar variable -> do
-    let s = Step description variable typ (EqRes expression)
+    let s = Step description variable typ (EqRes expression) Nothing
     modify $ \p -> p { steps = s : p.steps }
     pure expression
   _ -> error $ "Expected note to take variable from previous step, instead got: " <> show expression
@@ -165,27 +170,35 @@ evalExplanationS d expl = do
 
 evalPart :: Date -> Part -> State [Var] Part
 evalPart d p = do
-  (pVars, nStart) <- evalStart d p.startDate
-  let (nvars, nss) = flip runState pVars $ mapM evalStep p.steps
+  (pVars, mn, nStart) <- evalStart d p.startDate
+  let (nvars, nss) = fmap (addMnemonic mn) . flip runState pVars $ mapM evalStep p.steps
   let result = headVars "part" nvars
   modify $ (:) result
   pure p { steps = nss, startDate = nStart }
+
+addMnemonic :: OptMnemonic -> [Step] -> [Step]
+addMnemonic = maybe id add
+ where
+  add (vd, mn) = map (\s -> if s.variable == vd then s {mnemonic = Just mn} else s)
 
 headVars :: String -> [Var] -> Var
 headVars n = \case
   (r:_) -> r
   [] -> error $ "cannot eval empty " <> n
 
-evalStart :: Date -> StartDate -> State [Var] ([Var], StartDate)
+type OptMnemonic = Maybe (Char, String)
+
+evalStart :: Date -> StartDate -> State [Var] ([Var], OptMnemonic, StartDate)
 evalStart d s = do
   vars <- get
   pure $ case s of
-    StartingWithYear vy _ -> (year vy : vars, StartingWithYear vy (Just d.year))
-    StartingWithDate vd vo _ -> (day vd : doom vo : vars, StartingWithDate vd vo (Just d))
+    StartingWithYear vy _ -> (year vy : vars, Nothing, StartingWithYear vy (Just d.year))
+    StartingWithDate vd vo _ -> (day vd : doom vo : vars, Just (vo, mnemonic), StartingWithDate vd vo (Just d))
  where
   year vy = (vy, fromIntegral d.year)
   day vd = (vd, fromIntegral d.day)
-  doom vo = (vo, fromIntegral $ (snd $ closestDoomsday defaultMnemonics d).day)
+  (mnemonic, doomsday) = closestDoomsday defaultMnemonics d
+  doom vo = (vo, fromIntegral doomsday.day)
 
 evalStep :: Step -> State [Var] Step
 evalStep s = do

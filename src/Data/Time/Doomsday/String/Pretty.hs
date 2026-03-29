@@ -17,6 +17,7 @@ module Data.Time.Doomsday.String.Pretty (
 ) where
 
 import Data.String ( IsString(..) )
+import Data.List (intercalate)
 
 class Pretty a where
   format :: a -> Format
@@ -74,18 +75,29 @@ formatTerminal term = \case
   FmtAnn a f -> let (s, e) = term a in s <> formatTerminal term f <> e
   FmtList l -> unlines $ mappend " - " . formatTerminal term <$> l
   FmtConcat fs -> mconcat $ formatTerminal term <$> fs
-  FmtParagraphs ps -> unlines $ formatTerminal term <$> ps
+  FmtParagraphs ps -> intercalate "\n" $ formatTerminal term <$> ps
 
 instance Semigroup Format where
-  FmtStr "" <> f = f
-  f <> FmtStr "" = f
+  f1 <> f2 | isEmpty f1 = f2
+  f1 <> f2 | isEmpty f2 = f1
   (FmtConcat f1) <> (FmtConcat f2) = FmtConcat (f1 <> f2)
   f <> (FmtConcat fs) = FmtConcat (f : fs)
   (FmtConcat fs) <> f = FmtConcat (fs <> [f])
   f1 <> f2 = FmtConcat [f1, f2]  
 
+isEmpty :: Format -> Bool
+isEmpty = \case
+  FmtStr s -> null s
+  FmtAnn _ f -> isEmpty f
+  FmtList l -> null l
+  FmtConcat fs -> null fs || all isEmpty fs
+  FmtParagraphs ps -> null ps
+
 (<+>) :: Format -> Format -> Format
-f1 <+> f2 = format f1 <> FmtStr " " <> format f2
+f1 <+> f2 
+ | isEmpty f1 = f2
+ | isEmpty f2 = f1
+ | otherwise = format f1 <> FmtStr " " <> format f2
 
 ($+$) :: Format -> Format -> Format
 f1 $+$ f2 = format f1 <> FmtStr "\n" <> format f2

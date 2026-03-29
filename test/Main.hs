@@ -187,7 +187,7 @@ explanationTests = testGroup "Explanations"
   ]
  where
   d = Date 2026 02 27
-  emptyExpl = Explanation [] Nothing Nothing
+  emptyExpl = Explanation [] Nothing Nothing Nothing
   (centuryExpl, centuryVar) = runState findCenturyAnchor emptyExpl
   (yearExpl, yearVar) = runState (findYearAnchor centuryVar) emptyExpl
   (weekExpl, _) = runState (findWeekday yearVar) emptyExpl
