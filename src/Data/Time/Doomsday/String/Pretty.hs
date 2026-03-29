@@ -1,6 +1,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE NamedDefaults #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Data.Time.Doomsday.String.Pretty (
   Pretty(..),
   pretty,
@@ -11,6 +12,8 @@ module Data.Time.Doomsday.String.Pretty (
   (<+>),
   ($+$),
   default IsString,
+  -- * Utils
+  tense,
 ) where
 
 import Data.String ( IsString(..) )
@@ -86,3 +89,9 @@ f1 <+> f2 = format f1 <> FmtStr " " <> format f2
 
 ($+$) :: Format -> Format -> Format
 f1 $+$ f2 = format f1 <> FmtStr "\n" <> format f2
+
+tense :: Ordering -> Format
+tense = \case
+  LT -> "was"
+  EQ -> "is"
+  GT -> "will be"

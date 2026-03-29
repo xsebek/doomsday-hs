@@ -66,7 +66,8 @@ training r = today >>= runInputT defaultSettings . loop . fromTime
     if continue then loop t else return () {- TODO: print statistics -}
   run :: Date -> Explanation -> InputT IO Bool
   run date expl = do
-    minput <- getInputLine . prettyTerm $ "Which day of the week was " <> FmtAnn Input (format date) <> "?\n> "
+    let is = maybe "is" tense expl.relativeTo
+    minput <- getInputLine . prettyTerm $ "Which day of the week" <+> is <+> FmtAnn Input (format date) <> "?\n> "
     case partition (=='?') . trim <$> minput of
       Nothing -> return False
       Just (_, "quit") -> return False

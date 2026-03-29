@@ -78,10 +78,6 @@ instance Pretty Explanation where
       (Just o, Just r) -> [guess <> "The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
       _ -> []
     guess = maybe "" ((<> " ") . bool (FmtAnn Failure "Wrong!") (FmtAnn Success "Correct!")) expl.correct
-    tense = \case
-      LT -> "was"
-      EQ -> "is"
-      GT -> "will be"
 
 instance Pretty Part where
   format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (map format ss)
