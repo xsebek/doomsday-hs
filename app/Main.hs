@@ -72,17 +72,23 @@ training r = today >>= runInputT defaultSettings . loop . fromTime
       Just (_, "quit") -> return False
       Just (q, "") | not $ null q -> do
         -- TODO: save statistics
-        outputPrettyLn expl
+        outputPrettyLn $ verboseExpl q expl
         return True
-      Just (_, input) -> case parseDayOfWeek input of
+      Just (q, input) -> case parseDayOfWeek input of
         Left e -> do
-          when (not $ null input) $ outputStrLn e
-          outputStrLn "Type the day of week as digit or name prefix, or type quit/Ctrl+D"
+          let outputErrLn = outputPrettyLn . FmtAnn Failure . format
+          when (not $ null input) $ outputErrLn e
+          outputErrLn "Type the day of week as digit or name prefix, or type quit/Ctrl+D"
           run date expl
         Right w -> do
           -- TODO: add correct/wrong field inside explanation.
-          outputPrettyLn $ if Just w == expl.result then FmtAnn Success "Correct!" else FmtAnn Failure "Wrong!"
+          let correct = Just w == expl.result
+          outputPrettyLn $ verboseExpl q expl { correct = Just correct }
           return True
+
+  verboseExpl q expl = case format expl of
+    FmtParagraphs ps -> FmtParagraphs . reverse . take (1 + length q) $ reverse ps
+    f -> f
 
 outputPrettyLn :: (MonadIO m, Pretty a) => a -> InputT m ()
 outputPrettyLn s = haveTerminalUI >>= \t -> outputStrLn ((if t then prettyTerm else pretty) s)
