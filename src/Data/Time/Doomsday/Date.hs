@@ -3,13 +3,13 @@
 module Data.Time.Doomsday.Date (
     Date (..),
     daysFromTo,
-    readYMD,
+    readIsoDate,
 ) where
 
 import Data.Time.Doomsday.Month
 import Data.Time.Doomsday.Year
 import Data.Time.Doomsday.String.Pretty
-import Text.Read (readMaybe)
+import Data.Char (isDigit)
 
 data Date = Date
   { year :: Year
@@ -18,19 +18,12 @@ data Date = Date
   }
   deriving (Eq, Ord, Show)
 
-readYMD :: String -> Maybe Date
-readYMD s = case splitOn '-' s of
-  [y, m, d] -> Date <$> readMaybe y <*> fmap toEnum (readMaybe m) <*> readMaybe d
-  _ -> Nothing
-
-splitOn :: Char -> String -> [String]
-splitOn c = \case
-  (a : as)
-    | a /= c -> case splitOn c as of
-      [] -> [[a]]
-      (s:ss) -> ((a:s):ss)
-    | otherwise -> [] : splitOn c as
-  [] -> [[]]
+readIsoDate :: String -> Either String Date
+readIsoDate = \case
+  [y1,y2,y3,y4,'-',m1,m2,'-',d1,d2]
+    | all isDigit [y1,y2,y3,y4,m1,m2,d1,d2]
+    -> Right $ Date (read [y1,y2,y3,y4]) (toEnum $ read [m1,m2]) (read [d1,d2])
+  _ -> Left "Expected date in format YYYY-MM-DD"
 
 instance Pretty Date where
   pretty :: Date -> String

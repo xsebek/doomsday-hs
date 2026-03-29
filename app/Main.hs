@@ -8,9 +8,10 @@ import System.Random
 import System.Random.Stateful
 import Options.Applicative
 import Control.Monad.IO.Class (liftIO)
-import Data.Char (isDigit)
 import Data.Enum (enumerate)
-import Data.List (intercalate)
+import Data.List (intercalate, dropWhileEnd, partition)
+import Data.Char (isSpace)
+import Control.Monad (when)
 
 main :: IO ()
 main = do
@@ -35,19 +36,13 @@ parser = hsubparser
 
 explainCommand :: Parser Command
 explainCommand = Explain . ExplainParams
-  <$> argument isoDate (metavar "YYYY-MM-DD")
-
-isoDate :: ReadM Date
-isoDate = eitherReader $ \case
-  [y1,y2,y3,y4,'-',m1,m2,'-',d1,d2]
-    | all isDigit [y1,y2,y3,y4,m1,m2,d1,d2]
-    -> Right $ Date (read [y1,y2,y3,y4]) (toEnum $ read [m1,m2]) (read [d1,d2])
-  _ -> Left "Expected date in format YYYY-MM-DD"
+  <$> argument (eitherReader readIsoDate) (metavar "YYYY-MM-DD")
 
 trainCommand :: Parser Command
 trainCommand = Train . TrainParams
-  <$> option auto (long "range" <> short 'r' <> metavar "RANGE" <> value Year
-         <> help ("Pick random dates from given time range " <> intercalate "|" (show <$> enumerate @DateRange))  <> showDefault)
+  <$> option auto
+    ( long "range" <> short 'r' <> metavar "RANGE" <> value Year
+     <> help ("Pick random dates from given time range " <> intercalate "|" (show <$> enumerate @DateRange))  <> showDefault)
 
 data Command 
   = Explain ExplainParams
@@ -57,28 +52,35 @@ data ExplainParams = ExplainParams { date :: Date }
 
 data TrainParams = TrainParams { range :: DateRange }
 
-today :: IO Time.Day
-today = Time.localDay . Time.zonedTimeToLocalTime <$> Time.getZonedTime
-
-toTime :: Date -> Time.Day
-toTime (Date y m d) = Time.YearMonthDay y (fromEnum m) d
-
-fromTime :: Time.Day -> Date
-fromTime (Time.YearMonthDay y m d) = Date y (toEnum m) d
-
 training :: DateRange -> IO ()
 training r = today >>= runInputT defaultSettings . loop . fromTime
-   where
-       loop :: Date -> InputT IO ()
-       loop t = do
-           date <- liftIO $ randomDate r t
-           minput <- getInputLine $ "Which day of the week was " <> pretty date <> "?\n> "
-           outputStrLn . pretty $ evalExplanation date doomsdayExplanation { relativeTo = Just $ date `compare` t }
-           case minput of
-               Nothing -> return ()
-               Just "quit" -> return ()
-               Just input -> do outputStrLn $ "Input was: " ++ input
-                                loop t
+ where
+  loop :: Date -> InputT IO ()
+  loop t = do
+    date <- liftIO $ randomDate r t
+    let expl = evalExplanation date doomsdayExplanation { relativeTo = Just $ date `compare` t }
+    continue <- run date expl
+    outputStrLn ""
+    if continue then loop t else return () {- TODO: print statistics -}
+  run :: Date -> Explanation -> InputT IO Bool
+  run date expl = do
+    minput <- getInputLine $ "Which day of the week was " <> pretty date <> "?\n> "
+    case partition (=='?') . trim <$> minput of
+      Nothing -> return False
+      Just (_, "quit") -> return False
+      Just (q, "") | not $ null q -> do
+        -- TODO: save statistics
+        outputStrLn $ pretty expl
+        return True
+      Just (_, input) -> case parseDayOfWeek input of
+        Left e -> do
+          when (not $ null input) $ outputStrLn e
+          outputStrLn "Type the day of week as digit or name prefix, or type quit/Ctrl+D"
+          run date expl
+        Right w -> do
+          -- TODO: add correct/wrong field inside explanation.
+          outputStrLn $ if Just w == expl.result then "Correct!" else "Wrong!"
+          return True
 
 data DateRange = Month | Year | Century | Alltime
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
@@ -95,3 +97,15 @@ randomDate dr (Date ty tm td) = do
  where
   randomDateR :: Num a => DateRange -> (Integer, Integer) -> a -> IO a
   randomDateR drMin r v = if dr >= drMin then fromInteger <$> applyAtomicGen (uniformR r) globalStdGen else pure v
+
+today :: IO Time.Day
+today = Time.localDay . Time.zonedTimeToLocalTime <$> Time.getZonedTime
+
+toTime :: Date -> Time.Day
+toTime (Date y m d) = Time.YearMonthDay y (fromEnum m) d
+
+fromTime :: Time.Day -> Date
+fromTime (Time.YearMonthDay y m d) = Date y (toEnum m) d
+
+trim :: String -> String
+trim = dropWhile isSpace . dropWhileEnd isSpace
