@@ -31,7 +31,6 @@ import Data.Time.Doomsday.State.Simple
 import Data.Time.Doomsday.String.Pretty
 import Data.Time.Doomsday.Year
 import Data.Time.Doomsday.Mnemonic (closestDoomsday, defaultMnemonics)
-import Data.Bool (bool)
 
 ---------------------------------------------------------------------
 -- DATA
@@ -41,7 +40,7 @@ data Explanation = Explanation
   { parts :: [Part]
   , relativeTo :: Maybe Ordering
   , result :: Maybe DayOfWeek
-  , correct :: Maybe Bool
+  , response :: Maybe DayOfWeek
   }
 
 data Part = Part
@@ -77,7 +76,11 @@ instance Pretty Explanation where
     res = case (expl.relativeTo, expl.result) of
       (Just o, Just r) -> [guess <> "The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
       _ -> []
-    guess = maybe "" ((<> " ") . bool (FmtAnn Failure "Wrong!") (FmtAnn Success "Correct!")) expl.correct
+    guess = case (,) <$> expl.result <*> expl.response of
+      Nothing -> ""
+      Just (r,d) -> if r == d
+        then FmtAnn Success (format d) <+> "is correct! "
+        else FmtAnn Failure (format d) <+> "is wrong! "
 
 instance Pretty Part where
   format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (map format ss)
