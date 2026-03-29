@@ -105,6 +105,9 @@ executable doomsday
     build-depends:
         base ^>=4.22.0.0,
         doomsday,
+        haskeline,
+        optparse-applicative,
+        random,
         time,
 
     -- Directories containing source files.
