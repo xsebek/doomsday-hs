@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Data.Time.Doomsday.Equation (
   Equation (..),
   eqResult,
@@ -22,11 +23,10 @@ infixr 1 :==
 infixr 1 :===
 
 instance Pretty Equation where
-    pretty :: Equation -> String
-    pretty = \case
-      EqRes e -> pretty e
-      e :== eq -> pretty e <> " = " <> pretty eq
-      e :=== eq -> pretty e <> " ≡ " <> pretty eq
+    format = FmtAnn Math . \case
+      EqRes e -> format e
+      e :== eq -> format e <+> "=" <+> format eq
+      e :=== eq -> format e <+> "≡" <+> format eq
 
 type EqOp = Expression -> Equation -> Equation
 

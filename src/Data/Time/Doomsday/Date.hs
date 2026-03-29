@@ -26,8 +26,7 @@ readIsoDate = \case
   _ -> Left "Expected date in format YYYY-MM-DD"
 
 instance Pretty Date where
-  pretty :: Date -> String
-  pretty (Date y m d) = unwords [show d, show m, show y]
+  format (Date y m d) = format d <+> format m <+> format y
 
 daysFromTo :: Date -> Date -> Int
 daysFromTo a b =

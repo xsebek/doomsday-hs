@@ -49,8 +49,7 @@ substitute vars = \case
   fv v = fromMaybe (EVar v) . fmap snd $ find ((==v) . fst) vars
 
 instance Pretty Expression where
-  pretty :: Expression -> String
-  pretty = go 12
+  format = FmtStr . go 12
    where
     paren :: Int -> Int -> String -> String
     paren pOut pIn s = if pOut <= pIn then "(" <> s <> ")" else s

@@ -2,6 +2,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Data.Time.Doomsday.Explanation (
     Explanation (..),
@@ -22,7 +23,6 @@ module Data.Time.Doomsday.Explanation (
     evalExplanationS,
 ) where
 
-import Data.List (intercalate, singleton)
 import Data.Time.Doomsday.Date
 import Data.Time.Doomsday.DayOfWeek (DayOfWeek)
 import Data.Time.Doomsday.Equation
@@ -70,10 +70,10 @@ data PartBuilder
 ---------------------------------------------------------------------
 
 instance Pretty Explanation where
-  pretty expl = intercalate "\n" $ map pretty expl.parts <> res
+  format expl = FmtParagraphs $ map format expl.parts <> res
    where
     res = case (expl.relativeTo, expl.result) of
-      (Just o, Just r) -> singleton . unwords $ ["The weekday", tense o, pretty r]
+      (Just o, Just r) -> ["The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
       _ -> []
     tense = \case
       LT -> "was"
@@ -81,17 +81,18 @@ instance Pretty Explanation where
       GT -> "will be"
 
 instance Pretty Part where
-  pretty (Part g s ss) = unlines $ (g <> " " <> pretty s) : map ((" - " <>) . pretty) ss
+  format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (map format ss)
 
 instance Pretty StartDate where
-  pretty :: StartDate -> String
-  pretty = \case
-    StartingWithYear y n -> "Starting with year " <> maybe [y] pretty n <> ":"
-    StartingWithDate d _o mDate -> "Starting with date " <> maybe [d] pretty mDate <> ":"
+  format = \case
+    StartingWithYear y n -> "Starting with year" <+> inputFmt y n <> ":"
+    StartingWithDate d _o mDate -> "Starting with date" <+> inputFmt d mDate <> ":"
+   where
+    inputFmt :: Pretty a => Char -> Maybe a -> Format
+    inputFmt var f = FmtAnn Input $ maybe (FmtStr [var]) format f
 
 instance Pretty Step where
-  pretty :: Step -> String
-  pretty s = unwords [s.description, pretty s.equation]
+  format s = format s.description <+> format s.equation
 
 ---------------------------------------------------------------------
 -- Builder

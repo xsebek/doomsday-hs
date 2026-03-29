@@ -6,6 +6,7 @@ module Data.Time.Doomsday.Month (
 
 import Data.Time.Doomsday.Enum.Util (Pred (..))
 import Data.Time.Doomsday.Enum.Util qualified as Enum
+import Data.Time.Doomsday.String.Pretty (Pretty)
 
 data Month
     = January
@@ -42,6 +43,8 @@ monthLength isLeap = \case
 
 mod1to12 :: Integral m => m -> m
 mod1to12 m = ((m - 1) `mod` 12) + 1
+
+instance Pretty Month
 
 -- | Months are numbered starting from 1 and iteration repeats forever.
 instance Enum Month where

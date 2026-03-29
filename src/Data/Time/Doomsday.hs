@@ -13,8 +13,8 @@ module Data.Time.Doomsday (
   module Equation,
   module Explanation,
   module Mnemonic,
+  module Pretty,
 
-  Pretty(..),
   State (..),
 ) where
 

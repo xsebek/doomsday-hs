@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
 import Data.Time.Doomsday
@@ -6,8 +7,8 @@ import Data.Time qualified as Time
 import System.Console.Haskeline
 import System.Random
 import System.Random.Stateful
-import Options.Applicative
-import Control.Monad.IO.Class (liftIO)
+import Options.Applicative hiding (Failure, Success)
+import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.Enum (enumerate)
 import Data.List (intercalate, dropWhileEnd, partition)
 import Data.Char (isSpace)
@@ -19,7 +20,8 @@ main = do
   case options of
     Explain e -> do
       relative <- (toTime e.date `compare`) <$> today
-      putStrLn . pretty $ evalExplanation e.date doomsdayExplanation { relativeTo = Just relative }
+      -- TODO: detect terminal output by hIsTerminalDevice
+      putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation { relativeTo = Just relative }
     Train t -> training t.range
  where
   opts = info (parser <**> helper)
@@ -64,13 +66,13 @@ training r = today >>= runInputT defaultSettings . loop . fromTime
     if continue then loop t else return () {- TODO: print statistics -}
   run :: Date -> Explanation -> InputT IO Bool
   run date expl = do
-    minput <- getInputLine $ "Which day of the week was " <> pretty date <> "?\n> "
+    minput <- getInputLine . prettyTerm $ "Which day of the week was " <> FmtAnn Input (format date) <> "?\n> "
     case partition (=='?') . trim <$> minput of
       Nothing -> return False
       Just (_, "quit") -> return False
       Just (q, "") | not $ null q -> do
         -- TODO: save statistics
-        outputStrLn $ pretty expl
+        outputPrettyLn expl
         return True
       Just (_, input) -> case parseDayOfWeek input of
         Left e -> do
@@ -79,8 +81,11 @@ training r = today >>= runInputT defaultSettings . loop . fromTime
           run date expl
         Right w -> do
           -- TODO: add correct/wrong field inside explanation.
-          outputStrLn $ if Just w == expl.result then "Correct!" else "Wrong!"
+          outputPrettyLn $ if Just w == expl.result then FmtAnn Success "Correct!" else FmtAnn Failure "Wrong!"
           return True
+
+outputPrettyLn :: (MonadIO m, Pretty a) => a -> InputT m ()
+outputPrettyLn s = haveTerminalUI >>= \t -> outputStrLn ((if t then prettyTerm else pretty) s)
 
 data DateRange = Month | Year | Century | Alltime
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
