@@ -28,7 +28,8 @@ trainingREPL r = today >>= runInputT defaultSettings . loop . fromTime
   run :: Date -> Explanation -> InputT IO Bool
   run date expl = do
     let is = maybe "is" tense expl.relativeTo
-    minput <- getInputLine . prettyTerm $ "Which day of the week" <+> is <+> FmtAnn Input (format date) <> "?\n> "
+    let inputDate = FmtAnn Input (format date)
+    minput <- getInputLine . prettyTerm $ "Which day of the week" <+> is <+> inputDate <> "?\n> "
     case partition (=='?') . trim <$> minput of
       Nothing -> return False
       Just (_, "quit") -> return False
