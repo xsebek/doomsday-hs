@@ -26,11 +26,13 @@ infixr 1 :===
 data IsFinal a = IsFinal Bool a
 
 instance Pretty (IsFinal Equation) where
-    format = FmtAnn Math . \case
-      IsFinal fin a -> let f = format . IsFinal fin in case a of
-        EqRes e -> (if fin then FmtAnn Result else id) $ format e
-        e :== eq -> format e <+> "=" <+> f eq
-        e :=== eq -> format e <+> "≡" <+> f eq
+  format (IsFinal fin equa) = FmtAnn Math $ fmt equa
+   where
+    fmt = \case
+      EqRes e -> (if fin then FmtAnn Result else id) $ format e
+      e :== eq -> format e <+> "=" <+> fmt eq
+      e :=== eq -> format e <+> "≡" <+> fmt eq
+
 
 type EqOp = Expression -> Equation -> Equation
 
