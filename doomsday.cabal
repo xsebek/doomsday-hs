@@ -60,21 +60,21 @@ library
 
     -- Modules exported by the library.
     exposed-modules:
-      Data.Time.Doomsday
-      Data.Time.Doomsday.Year
-      Data.Time.Doomsday.Month
-      Data.Time.Doomsday.Date
-      Data.Time.Doomsday.DayOfWeek
-      Data.Time.Doomsday.Equation
-      Data.Time.Doomsday.Expression
-      Data.Time.Doomsday.Explanation
-      Data.Time.Doomsday.Mnemonic
+        Data.Time.Doomsday
+        Data.Time.Doomsday.Year
+        Data.Time.Doomsday.Month
+        Data.Time.Doomsday.Date
+        Data.Time.Doomsday.DayOfWeek
+        Data.Time.Doomsday.Equation
+        Data.Time.Doomsday.Expression
+        Data.Time.Doomsday.Explanation
+        Data.Time.Doomsday.Mnemonic
 
     -- Modules included in this library but not exported.
     other-modules:
-      Data.Time.Doomsday.Enum.Util
-      Data.Time.Doomsday.State.Simple
-      Data.Time.Doomsday.String.Pretty
+        Data.Time.Doomsday.Enum.Util
+        Data.Time.Doomsday.State.Simple
+        Data.Time.Doomsday.String.Pretty
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions: 
@@ -96,7 +96,9 @@ executable doomsday
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules:
+      REPL
+      Util
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
