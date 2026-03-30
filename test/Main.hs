@@ -184,6 +184,10 @@ explanationTests = testGroup "Explanations"
       prettyIO doomsdayExplanation
   , goldenVsString "Pretty evaluated whole explanation" "test/data/whole_evaluated.golden" $
       prettyIO (evalExplanation d doomsdayExplanation) { relativeTo = Just EQ }
+  , goldenVsString "Terminal abstract whole explanation" "test/data/terminal_abstract.golden" $
+      prettyTermIO doomsdayExplanation
+  , goldenVsString "Terminal evaluated whole explanation" "test/data/terminal_evaluated.golden" $
+      prettyTermIO (evalExplanation d doomsdayExplanation) { relativeTo = Just EQ }
   ]
  where
   d = Date 2026 02 27
@@ -194,7 +198,9 @@ explanationTests = testGroup "Explanations"
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a) => a -> IO BS.ByteString
   prettyIO = pure . toLazyByteString . mconcat . map charUtf8 . pretty
-
+  prettyTermIO :: (Pretty a) => a -> IO BS.ByteString
+  prettyTermIO = pure . toLazyByteString . mconcat . map charUtf8 . prettyTerm
+  
 -- -----------------------------------------------------------------
 -- Arbitrary instances
 -- -----------------------------------------------------------------
