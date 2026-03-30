@@ -7,6 +7,7 @@ module Data.Time.Doomsday.Equation (
   IsEquation (..),
   (^==),
   (^===),
+  IsFinal (..),
 ) where
 
 import Data.Time.Doomsday.Expression
@@ -22,11 +23,14 @@ data Equation
 infixr 1 :==
 infixr 1 :===
 
-instance Pretty Equation where
+data IsFinal a = IsFinal Bool a
+
+instance Pretty (IsFinal Equation) where
     format = FmtAnn Math . \case
-      EqRes e -> format e
-      e :== eq -> format e <+> "=" <+> format eq
-      e :=== eq -> format e <+> "≡" <+> format eq
+      IsFinal fin a -> let f = format . IsFinal fin in case a of
+        EqRes e -> (if fin then FmtAnn Result else id) $ format e
+        e :== eq -> format e <+> "=" <+> f eq
+        e :=== eq -> format e <+> "≡" <+> f eq
 
 type EqOp = Expression -> Equation -> Equation
 

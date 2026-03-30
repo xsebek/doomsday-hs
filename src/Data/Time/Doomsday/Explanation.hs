@@ -75,7 +75,10 @@ instance Pretty Explanation where
   format expl = FmtParagraphs $ map format expl.parts <> res
    where
     res = case (expl.relativeTo, expl.result) of
-      (Just o, Just r) -> [guess <+> "The weekday" <+> tense o <+> FmtAnn Result (format r) <> "."]
+      (Just o, Just r) ->
+        let is = tense o
+            resWeekday = FmtAnn Result (format r)
+        in [guess <+> "The weekday" <+> is <+> resWeekday <> "."]
       _ -> []
     guess = case (,) <$> expl.result <*> expl.response of
       Nothing -> ""
@@ -84,7 +87,11 @@ instance Pretty Explanation where
         else FmtAnn Failure (format d) <+> "is wrong!"
 
 instance Pretty Part where
-  format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (map format ss)
+  format (Part g s ss) = FmtStr g <+> format s $+$ FmtList (final ss)
+   where
+    final [] = []
+    final [x] = [format $ IsFinal True x]
+    final (x:xs) = format (IsFinal False x) : final xs
 
 instance Pretty StartDate where
   format = \case
@@ -94,8 +101,8 @@ instance Pretty StartDate where
     inputFmt :: Pretty a => Char -> Maybe a -> Format
     inputFmt var f = FmtAnn Input $ maybe (FmtStr [var]) format f
 
-instance Pretty Step where
-  format s = format s.description <+> format s.equation <+> mn
+instance Pretty (IsFinal Step) where
+  format (IsFinal f s) = format s.description <+> format (IsFinal f s.equation) <+> mn
    where
     mn = case s.mnemonic of
       Nothing -> ""
