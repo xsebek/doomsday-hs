@@ -14,6 +14,7 @@ module Data.Time.Doomsday.Explanation (
     part,
     startingWithYear,
     startingWithDate,
+    AssignmentBuilder (..),
     step,
     stepI,
     note,
@@ -63,10 +64,6 @@ data Step = Step
 
 data VarType = VDay | VInt
 
-data PartBuilder 
-  = PartStartYear Char (State Part Expression)
-  | PartStartDate Char Char (State Part Expression)
-
 ---------------------------------------------------------------------
 -- Pretty
 ---------------------------------------------------------------------
@@ -112,6 +109,10 @@ instance Pretty (IsFinal Step) where
 -- Builder
 ---------------------------------------------------------------------
 
+data PartBuilder 
+  = PartStartYear Char (State Part Expression)
+  | PartStartDate Char Char (State Part Expression)
+
 explanation :: State Explanation a -> Explanation
 explanation sExpl = r . fst . runState sExpl $ Explanation [] Nothing Nothing Nothing
  where
@@ -134,14 +135,18 @@ startingWithYear y b = PartStartYear y $ b (EVar y)
 startingWithDate :: Char -> Char -> (Expression -> Expression -> State Part Expression) -> PartBuilder
 startingWithDate d o b = PartStartDate d o $ b (EVar d) (EVar o)
 
-step :: String -> Char -> Expression -> State Part Expression
+data AssignmentBuilder = Char := Expression
+
+infix 4 :=
+
+step :: String -> AssignmentBuilder -> State Part Expression
 step = stepG VDay
 
-stepI :: String -> Char -> Expression -> State Part Expression
+stepI :: String -> AssignmentBuilder -> State Part Expression
 stepI = stepG VInt
 
-stepG :: VarType -> String -> Char -> Expression -> State Part Expression
-stepG typ description variable expression = do
+stepG :: VarType -> String -> AssignmentBuilder -> State Part Expression
+stepG typ description (variable := expression) = do
   let s = Step description variable typ (variable ^== expression) Nothing
   modify $ \p -> p { steps = s : steps p }
   pure (EVar variable)
