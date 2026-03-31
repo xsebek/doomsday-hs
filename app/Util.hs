@@ -3,6 +3,7 @@ import Data.Time.Doomsday
 import Data.List
 import Data.Char
 import Data.Time qualified as Time
+import qualified System.Random.Stateful as R
 
 getToday :: IO Time.Day
 getToday = Time.localDay . Time.zonedTimeToLocalTime <$> Time.getZonedTime
@@ -18,3 +19,19 @@ toTimeD = toEnum . fromEnum
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace
+
+data DateRange = Month | Year | Century | Alltime
+  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+
+randomDate :: DateRange -> Date -> IO Date
+randomDate dr (Date ty tm td) = do
+  c <- randomDateR Alltime (16, 21) (ty `div` 100)
+  i <- randomDateR Century (0, 99) (ty `mod` 100)
+  let y = c * 100 + i
+  m <- randomDateR Year (1, 12) tm
+  let maxD = monthLength (isLeapYear y) m
+  d <- randomDateR Month (1, maxD) td
+  pure $ Date y m d
+ where
+  randomDateR :: Num a => DateRange -> (Integer, Integer) -> a -> IO a
+  randomDateR drMin r v = if dr >= drMin then fromInteger <$> R.applyAtomicGen (R.uniformR r) R.globalStdGen else pure v

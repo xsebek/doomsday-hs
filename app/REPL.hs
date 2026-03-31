@@ -10,7 +10,6 @@ import System.Console.Haskeline
 import Control.Monad.IO.Class
 import Control.Monad (when)
 import Data.List
-import System.Random.Stateful qualified as R
 import Util
 import Data.Functor (($>))
 import Statistics
@@ -89,19 +88,3 @@ verboseExpl q expl = case format expl of
 
 outputPrettyLn :: (MonadIO m, Pretty a) => a -> InputT m ()
 outputPrettyLn s = haveTerminalUI >>= \t -> outputStrLn ((if t then prettyTerm else pretty) s)
-
-data DateRange = Month | Year | Century | Alltime
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
-
-randomDate :: DateRange -> Date -> IO Date
-randomDate dr (Date ty tm td) = do
-  c <- randomDateR Alltime (16, 21) (ty `div` 100)
-  i <- randomDateR Century (0, 99) (ty `mod` 100)
-  let y = c * 100 + i
-  m <- randomDateR Year (1, 12) tm
-  let maxD = monthLength (isLeapYear y) m
-  d <- randomDateR Month (1, maxD) td
-  pure $ Date y m d
- where
-  randomDateR :: Num a => DateRange -> (Integer, Integer) -> a -> IO a
-  randomDateR drMin r v = if dr >= drMin then fromInteger <$> R.applyAtomicGen (R.uniformR r) R.globalStdGen else pure v
