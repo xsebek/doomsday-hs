@@ -110,6 +110,7 @@ executable doomsday
         doomsday,
         directory,
         filepath,
+        granite,
         haskeline,
         optparse-applicative,
         random,

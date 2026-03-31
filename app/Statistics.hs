@@ -6,12 +6,13 @@ module Statistics (
   saveData,
   loadData,
   showStatistics,
+  plotBoxes,
 ) where
 
 import Data.Time
 import Util
 import Data.List.Split (splitOn)
-import Data.List (intercalate)
+import Data.List (intercalate, partition)
 import Data.Time.Format.ISO8601
 import System.IO
 import Data.Functor (($>))
@@ -20,6 +21,7 @@ import Control.Exception (catch, IOException)
 import System.Directory (doesFileExist, createDirectoryIfMissing, getXdgDirectory, XdgDirectory (..))
 import GHC.Stack (HasCallStack)
 import System.FilePath ((</>))
+import Granite.String (boxPlot, defPlot, Plot (..))
 
 ---------------------------------------------------------------------
 -- DATA
@@ -136,3 +138,25 @@ showStatistics ds = unlines
   failCount = length failures
   avgSpeed s = if null s then "-" else formatTime defaultTimeLocale "%02Ess" . avgTime $ mapMaybe elapsed s
   avgTime s = sum s / fromIntegral (length s)
+
+allEntries :: SaveData -> [Entry]
+allEntries sd = sd.current <> sd.previous
+
+plotBoxes :: Day -> SaveData -> String
+plotBoxes (YearMonthDay ty tm _) sd = boxPlot
+  [ ("Same month", map secs m)
+  , ("Other month", map secs y)
+  , ("Other year", map secs c)
+  , ("Other centuries", map secs nc)
+  ]
+  defPlot
+    { plotTitle = "Elapsed time to correct answer"
+    , yBounds = (Just 0, Nothing)
+    }
+ where
+  (m, nm) = partition ((\(YearMonthDay _ sm _) -> sm == tm) . date) successes
+  (y, ny) = partition ((\(YearMonthDay sy _ _) -> sy == ty) . date) nm
+  (c, nc) = partition ((\(YearMonthDay sy _ _) -> sy `div` 100 == ty `div` 100) . date) ny
+
+  successes = filter (\e -> e.answer == Just e.correct) $ allEntries sd
+  secs e = maybe (error "missing elapsed time") realToFrac e.elapsed

@@ -8,6 +8,7 @@ import Data.Enum (enumerate)
 import Data.List (intercalate)
 import REPL
 import Util
+import Statistics (loadData, plotBoxes)
 
 main :: IO ()
 main = do
@@ -18,6 +19,10 @@ main = do
       -- TODO: detect terminal output by hIsTerminalDevice
       putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation { relativeTo = Just relative }
     Train t -> trainingREPL t.range
+    Plot -> do
+      d <- getToday
+      sd <- loadData
+      putStrLn $ plotBoxes d sd
  where
   opts = info (parser <**> helper)
       ( header "doomsday - mentally calculate weekday"
@@ -29,6 +34,7 @@ parser :: Parser Command
 parser = hsubparser
   ( command "explain" (info explainCommand ( progDesc "Explain the doomsday algorithm for a given date" ))
   <> command "train" (info trainCommand ( progDesc "Train the doomsday algorithm in a read-eval loop" ))
+  <> command "plot" (info (pure Plot) ( progDesc "Show plots and statistics." ))
   )
 
 explainCommand :: Parser Command
@@ -44,6 +50,7 @@ trainCommand = Train . TrainParams
 data Command 
   = Explain ExplainParams
   | Train TrainParams
+  | Plot
 
 data ExplainParams = ExplainParams { date :: Date }
 
