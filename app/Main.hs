@@ -14,7 +14,7 @@ main = do
   options <- execParser opts
   case options of
     Explain e -> do
-      relative <- (toTime e.date `compare`) <$> today
+      relative <- (toTime e.date `compare`) <$> getToday
       -- TODO: detect terminal output by hIsTerminalDevice
       putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation { relativeTo = Just relative }
     Train t -> trainingREPL t.range

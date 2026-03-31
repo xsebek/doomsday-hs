@@ -98,6 +98,7 @@ executable doomsday
     -- Modules included in this executable, other than Main.
     other-modules:
       REPL
+      Statistics
       Util
 
     -- LANGUAGE extensions used by modules in this package.
@@ -107,10 +108,14 @@ executable doomsday
     build-depends:
         base ^>=4.22.0.0,
         doomsday,
+        directory,
+        filepath,
         haskeline,
         optparse-applicative,
         random,
+        split,
         time,
+        transformers,
 
     -- Directories containing source files.
     hs-source-dirs:   app

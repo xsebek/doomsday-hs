@@ -11,43 +11,70 @@ import Control.Monad.IO.Class
 import Control.Monad (when)
 import Data.List
 import System.Random.Stateful qualified as R
-import Data.Char
 import Util
 import Data.Functor (($>))
+import Statistics
+import Control.Monad.Trans.State.Strict 
+import Control.Monad.Trans.Class (lift)
+import Data.Time qualified as Time
+import Data.Time (UTCTime, getCurrentTime, diffUTCTime)
+
+type App a = InputT (StateT SaveData IO) a
+
+data QueryData = Q
+  { date :: Data.Time.Doomsday.Date
+  , correct :: Time.DayOfWeek
+  , start :: UTCTime
+  , explanation :: Explanation
+  }
 
 trainingREPL :: DateRange -> IO ()
-trainingREPL r = today >>= runInputT defaultSettings . loop . fromTime
+trainingREPL r = do
+  t <- fromTime <$> getToday
+  d <- loadData
+  flip evalStateT d . runInputT defaultSettings $ loop t
  where
-  loop :: Date -> InputT IO ()
-  loop t = do
-    date <- liftIO $ randomDate r t
-    let expl = evalExplanation date doomsdayExplanation { relativeTo = Just $ date `compare` t }
-    continue <- run date expl
+  loop :: Date -> App ()
+  loop today = do
+    time <- liftIO getCurrentTime
+    date <- liftIO $ randomDate r today
+    let expl = evalExplanation date doomsdayExplanation { relativeTo = Just $ date `compare` today }
+    let c = maybe (error "expected evaluated explanation") toTimeD expl.result
+    continue <- run $ Q date c time expl
     outputStrLn ""
-    if continue then loop t else return () {- TODO: print statistics -}
-  run :: Date -> Explanation -> InputT IO Bool
-  run date expl = do
-    let is = maybe "is" tense expl.relativeTo
-    let inputDate = FmtAnn Input (format date)
+    if continue then loop today else do
+      sd <- lift get
+      liftIO $ saveData sd
+      outputStrLn $ showStatistics sd
+  run :: QueryData -> App Bool
+  run q = do
+    let is = maybe "is" tense q.explanation.relativeTo
+    let inputDate = FmtAnn Input (format q.date)
     minput <- getInputLine . prettyTerm $ "Which day of the week" <+> is <+> inputDate <> "?\n> "
     case partition (=='?') . trim <$> minput of
       Nothing -> return False
       Just (_, "quit") -> return False
-      Just (q, "") | not $ null q -> showAnswer q expl $> True
-      Just (q, input) -> case parseDayOfWeek input of
-        Left e -> explainUsage input e >> run date expl
-        Right w -> answer q expl w $> True
+      Just (v, "") | not $ null v -> showAnswer q v $> True
+      Just (v, input) -> case parseDayOfWeek input of
+        Left e -> explainUsage input e >> run q
+        Right w -> evalAnswer q v w $> True
 
-answer :: [Char] -> Explanation -> DayOfWeek -> InputT IO ()
-answer q expl w = do
-  outputPrettyLn $ verboseExpl q expl { response = Just w }
+type Verbosity = [Char]
 
-showAnswer :: [Char] -> Explanation -> InputT IO ()
-showAnswer q expl = do
-  -- TODO: save statistics
-  outputPrettyLn $ verboseExpl q expl
+evalAnswer :: QueryData -> Verbosity -> DayOfWeek -> App ()
+evalAnswer q v w = do
+  t <- liftIO getCurrentTime
+  let e = Entry q.start (toTime q.date) q.correct (Just $ toTimeD w) (Just $ t `diffUTCTime` q.start)
+  lift $ modify (\s -> s { current = e : s.current })
+  outputPrettyLn $ verboseExpl v q.explanation { response = Just w }
 
-explainUsage :: String -> String -> InputT IO ()
+showAnswer :: QueryData -> Verbosity -> App ()
+showAnswer q v = do
+  let e = Entry q.start (toTime q.date) q.correct Nothing Nothing
+  lift $ modify (\s -> s { current = e : s.current })
+  outputPrettyLn $ verboseExpl v q.explanation
+
+explainUsage :: String -> String -> App ()
 explainUsage input e = do
   let outputErrLn = outputPrettyLn . FmtAnn Failure . format
   when (not $ null input) $ outputErrLn e
@@ -62,9 +89,6 @@ verboseExpl q expl = case format expl of
 
 outputPrettyLn :: (MonadIO m, Pretty a) => a -> InputT m ()
 outputPrettyLn s = haveTerminalUI >>= \t -> outputStrLn ((if t then prettyTerm else pretty) s)
-
-trim :: String -> String
-trim = dropWhile isSpace . dropWhileEnd isSpace
 
 data DateRange = Month | Year | Century | Alltime
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
