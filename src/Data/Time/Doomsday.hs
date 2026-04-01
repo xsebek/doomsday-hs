@@ -1,10 +1,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+
 module Data.Time.Doomsday (
   doomsdayExplanation,
   findCenturyAnchor,
   findYearAnchor,
   findWeekday,
-  
   module D,
   module Y,
   module M,
@@ -14,26 +14,27 @@ module Data.Time.Doomsday (
   module Explanation,
   module Mnemonic,
   module Pretty,
-
   State (..),
 ) where
 
 import Data.Time.Doomsday.Date as D
-import Data.Time.Doomsday.Year as Y
-import Data.Time.Doomsday.Month as M
 import Data.Time.Doomsday.DayOfWeek as W
 import Data.Time.Doomsday.Equation as Equation
 import Data.Time.Doomsday.Explanation as Explanation
 import Data.Time.Doomsday.Expression as Expression
 import Data.Time.Doomsday.Mnemonic as Mnemonic
+import Data.Time.Doomsday.Month as M
 import Data.Time.Doomsday.State.Simple (State (..))
 import Data.Time.Doomsday.String.Pretty as Pretty
+import Data.Time.Doomsday.Year as Y
+
 
 doomsdayExplanation :: Explanation
 doomsdayExplanation = explanation $ do
   a <- findCenturyAnchor
   w <- findYearAnchor a
   findWeekday w
+
 
 findCenturyAnchor :: State Explanation Expression
 findCenturyAnchor =
@@ -43,6 +44,7 @@ findCenturyAnchor =
     i <- step "the resulting increment is" $ 'I' := f * 5
     step "add Tuesday and get" $ 'A' := EDay Tuesday + i
 
+
 findYearAnchor :: Expression -> State Explanation Expression
 findYearAnchor centuryAnchor =
   part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
@@ -50,6 +52,7 @@ findYearAnchor centuryAnchor =
     t <- stepI "take the last two digits" $ 'T' := y `mod` 100
     i <- step "the resulting increment is" $ 'I' := t + t `div` 4
     step "add the century anchor to get" $ 'W' := a + i
+
 
 findWeekday :: Expression -> State Explanation Expression
 findWeekday yearAnchor =

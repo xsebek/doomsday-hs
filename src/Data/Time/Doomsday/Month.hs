@@ -1,32 +1,35 @@
 module Data.Time.Doomsday.Month (
-    Month (..),
-    allMonths,
-    monthLength,
+  Month (..),
+  allMonths,
+  monthLength,
 ) where
 
 import Data.Time.Doomsday.Enum.Util (Pred (..))
 import Data.Time.Doomsday.Enum.Util qualified as Enum
 import Data.Time.Doomsday.String.Pretty (Pretty)
 
+
 data Month
-    = January
-    | February
-    | March
-    | April
-    | May
-    | June
-    | July
-    | August
-    | September
-    | October
-    | November
-    | December
-  deriving (Show, Eq, Ord)
+  = January
+  | February
+  | March
+  | April
+  | May
+  | June
+  | July
+  | August
+  | September
+  | October
+  | November
+  | December
+  deriving (Eq, Ord, Show)
+
 
 allMonths :: [Month]
 allMonths = [January .. December]
 
-monthLength :: Num a => Bool -> Month -> a
+
+monthLength :: (Num a) => Bool -> Month -> a
 monthLength isLeap = \case
   January -> 31
   February -> if isLeap then 29 else 28
@@ -41,10 +44,13 @@ monthLength isLeap = \case
   November -> 30
   December -> 31
 
-mod1to12 :: Integral m => m -> m
+
+mod1to12 :: (Integral m) => m -> m
 mod1to12 m = ((m - 1) `mod` 12) + 1
 
+
 instance Pretty Month
+
 
 -- | Months are numbered starting from 1 and iteration repeats forever.
 instance Enum Month where
@@ -82,6 +88,7 @@ instance Enum Month where
   enumFromThenTo :: Month -> Month -> Month -> [Month]
   enumFromThenTo start next end =
     getPred <$> Enum.enumFromThenToEqZeroBased (Pred start) (Pred next) (Pred end)
+
 
 instance Num Month where
   (+) :: Month -> Month -> Month

@@ -1,28 +1,32 @@
 module Data.Time.Doomsday.DayOfWeek (
-    DayOfWeek (..),
-    daysOfWeek,
-    parseDayOfWeek,
+  DayOfWeek (..),
+  daysOfWeek,
+  parseDayOfWeek,
 ) where
 
+import Data.Char (isDigit, toLower)
+import Data.List (intercalate, isPrefixOf)
 import Data.Time.Doomsday.Enum.Util qualified as Enum
 import Data.Time.Doomsday.String.Pretty (Pretty)
-import Data.List (isPrefixOf, intercalate)
-import Data.Char (toLower, isDigit)
+
 
 data DayOfWeek
-    = Sunday
-    | Monday
-    | Tuesday
-    | Wednesday
-    | Thursday
-    | Friday
-    | Saturday
-  deriving (Show, Eq, Ord)
+  = Sunday
+  | Monday
+  | Tuesday
+  | Wednesday
+  | Thursday
+  | Friday
+  | Saturday
+  deriving (Eq, Ord, Show)
+
 
 daysOfWeek :: [DayOfWeek]
 daysOfWeek = [Sunday .. Saturday]
 
+
 instance Pretty DayOfWeek
+
 
 parseDayOfWeek :: String -> Either String DayOfWeek
 parseDayOfWeek [d] | d >= '0' && d <= '7' = Right . toEnum $ read [d]
@@ -33,6 +37,7 @@ parseDayOfWeek s = case filter isPrefixIgnoreCase daysOfWeek of
   ds -> Left $ "Matches more than one day of the week: " <> intercalate ", " (map show ds)
  where
   isPrefixIgnoreCase = isPrefixOf (map toLower s) . map toLower . show
+
 
 -- | Days of week are numbered starting from Sunday as 0
 --   and iteration repeats forever.
@@ -60,6 +65,7 @@ instance Enum DayOfWeek where
   enumFromThenTo :: DayOfWeek -> DayOfWeek -> DayOfWeek -> [DayOfWeek]
   enumFromThenTo = Enum.enumFromThenToEqZeroBased
 
+
 instance Num DayOfWeek where
   (+) :: DayOfWeek -> DayOfWeek -> DayOfWeek
   (+) = Enum.iso2 (+)
@@ -74,8 +80,10 @@ instance Num DayOfWeek where
   fromInteger :: Integer -> DayOfWeek
   fromInteger = toEnum . fromInteger . (`mod` 7)
 
+
 instance Real DayOfWeek where
   toRational = toRational . fromEnum
+
 
 instance Integral DayOfWeek where
   quotRem :: DayOfWeek -> DayOfWeek -> (DayOfWeek, DayOfWeek)

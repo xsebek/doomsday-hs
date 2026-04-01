@@ -1,27 +1,35 @@
 module Util where
-import Data.Time.Doomsday
-import Data.List
+
 import Data.Char
+import Data.List
 import Data.Time qualified as Time
-import qualified System.Random.Stateful as R
+import Data.Time.Doomsday
+import System.Random.Stateful qualified as R
+
 
 getToday :: IO Time.Day
 getToday = Time.localDay . Time.zonedTimeToLocalTime <$> Time.getZonedTime
 
+
 toTime :: Date -> Time.Day
 toTime (Date y m d) = Time.YearMonthDay y (fromEnum m) d
+
 
 fromTime :: Time.Day -> Date
 fromTime (Time.YearMonthDay y m d) = Date y (toEnum m) d
 
+
 toTimeD :: DayOfWeek -> Time.DayOfWeek
 toTimeD = toEnum . fromEnum
+
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace
 
+
 data DateRange = Month | Year | Century | Alltime
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
+  deriving (Bounded, Enum, Eq, Ord, Read, Show)
+
 
 randomDate :: DateRange -> Date -> IO Date
 randomDate dr (Date ty tm td) = do
@@ -33,5 +41,5 @@ randomDate dr (Date ty tm td) = do
   d <- randomDateR Month (1, maxD) td
   pure $ Date y m d
  where
-  randomDateR :: Num a => DateRange -> (Integer, Integer) -> a -> IO a
+  randomDateR :: (Num a) => DateRange -> (Integer, Integer) -> a -> IO a
   randomDateR drMin r v = if dr >= drMin then fromInteger <$> R.applyAtomicGen (R.uniformR r) R.globalStdGen else pure v
