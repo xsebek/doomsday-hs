@@ -4,7 +4,6 @@ module Main (main) where
 
 import Data.Time.Doomsday
 import Options.Applicative
-import Data.Enum (enumerate)
 import Data.List (intercalate)
 import REPL
 import Util
@@ -48,7 +47,7 @@ trainCommand :: Parser Command
 trainCommand = Train . TrainParams
   <$> option auto
     ( long "range" <> short 'r' <> metavar "RANGE" <> value Year
-     <> help ("Pick random dates from given time range " <> intercalate "|" (show <$> enumerate @DateRange))  <> showDefault)
+     <> help ("Pick random dates from given time range " <> intercalate "|" (show @DateRange <$> [minBound .. maxBound]))  <> showDefault)
 
 plotCommand :: Parser Command
 plotCommand = Stats <$> hsubparser

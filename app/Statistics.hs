@@ -20,7 +20,6 @@ import Data.Functor (($>))
 import Data.Maybe (mapMaybe)
 import Control.Exception (catch, IOException)
 import System.Directory (doesFileExist, createDirectoryIfMissing, getXdgDirectory, XdgDirectory (..))
-import GHC.Stack (HasCallStack)
 import System.FilePath ((</>))
 import Granite.String (boxPlot, defPlot, Plot (..), lineGraph)
 
@@ -58,11 +57,11 @@ saveFileName :: FilePath
 saveFileName = "data.csv"
 
 -- | Append entries to the CSV save file of player statistics.
-saveData :: HasCallStack => SaveData -> IO ()
+saveData :: SaveData -> IO ()
 saveData d = saveToFile (reverse d.current)
 
 -- | Parse the CSV save file of player statistics.
-loadData :: HasCallStack => IO SaveData
+loadData :: IO SaveData
 loadData = do
   d <- getSaveDir
   let p = d </> saveFileName
@@ -78,7 +77,7 @@ diffTimeFmt = "%0Es"
 weekdayFmt :: String
 weekdayFmt = "%a"
 
-saveToFile :: HasCallStack => [Entry] -> IO ()
+saveToFile :: [Entry] -> IO ()
 saveToFile es = do
   d <- getSaveDir
   createDirectoryIfMissing True d
@@ -98,12 +97,12 @@ formatLine e = intercalate ","
   formatTimeDefault :: FormatTime t => String -> t -> String
   formatTimeDefault = formatTime defaultTimeLocale
 
-parseSaveFile :: HasCallStack => FilePath -> IO (Either String [Entry])
+parseSaveFile :: FilePath -> IO (Either String [Entry])
 parseSaveFile p = do
   b <- doesFileExist p
   if b then catch @IOException parse (pure . Left . show) else pure $ Right []
  where
-  parse :: HasCallStack => IO (Either String [Entry])
+  parse :: IO (Either String [Entry])
   parse = mapM parseLine . lines <$> readFile p
 
 instance String ~ a => MonadFail (Either a) where 
@@ -111,7 +110,7 @@ instance String ~ a => MonadFail (Either a) where
 
 type Parser a = String -> Either String a
 
-parseLine :: HasCallStack => Parser Entry
+parseLine :: Parser Entry
 parseLine s = case trim <$> splitOn "," s of
   (t:d:c:a:e:_rest) -> Entry
     <$> iso8601ParseM t

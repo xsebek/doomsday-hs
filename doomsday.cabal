@@ -80,7 +80,7 @@ library
     -- other-extensions: 
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.22.0.0
+    build-depends:    base
 
     -- Directories containing source files.
     hs-source-dirs:   src
@@ -106,7 +106,7 @@ executable doomsday
 
     -- Other library packages from which modules are imported.
     build-depends:
-        base ^>=4.22.0.0,
+        base,
         doomsday,
         directory,
         filepath,
@@ -115,7 +115,7 @@ executable doomsday
         optparse-applicative,
         random,
         split,
-        time,
+        time >= 1.15,
         transformers,
 
     -- Directories containing source files.
@@ -148,7 +148,7 @@ test-suite doomsday-test
 
     -- Test dependencies.
     build-depends:
-        base ^>=4.22.0.0,
+        base,
         bytestring,
         QuickCheck,
         time,
