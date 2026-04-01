@@ -185,6 +185,7 @@ plotBoxes (YearMonthDay ty tm _) sd =
       , yBounds = (Just 0, Nothing)
       }
  where
+  -- TODO: this should use the date in entry, not today
   (m, nm) = partition ((\(YearMonthDay _ sm _) -> sm == tm) . date) successes
   (y, ny) = partition ((\(YearMonthDay sy _ _) -> sy == ty) . date) nm
   (c, nc) = partition ((\(YearMonthDay sy _ _) -> sy `div` 100 == ty `div` 100) . date) ny
