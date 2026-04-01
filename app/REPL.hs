@@ -3,7 +3,6 @@
 
 module REPL (
   trainingREPL,
-  DateRange (..),
 ) where
 
 import Control.Monad (when)
@@ -18,6 +17,7 @@ import Data.Time.Doomsday
 import Statistics
 import System.Console.Haskeline
 import Util
+import Data.Char (isSpace)
 
 
 type App a = InputT (StateT SaveData IO) a
@@ -35,7 +35,7 @@ trainingREPL :: DateRange -> IO ()
 trainingREPL r = do
   t <- fromTime <$> getToday
   d <- loadData
-  flip evalStateT d . runInputT defaultSettings $ loop t
+  flip evalStateT d . runInputT settings $ loop t
  where
   loop :: Date -> App ()
   loop today = do
@@ -63,6 +63,12 @@ trainingREPL r = do
       Just (v, input) -> case parseDayOfWeek input of
         Left e -> explainUsage input e >> run q
         Right w -> evalAnswer q v w $> True
+
+
+settings :: MonadIO m => Settings m
+settings = setComplete (completeWord' Nothing isSpace $ pure . comp) defaultSettings
+ where
+  comp s = either (const []) (fmap $ simpleCompletion . show) $ matchingDayOfWeek s
 
 
 type Verbosity = [Char]

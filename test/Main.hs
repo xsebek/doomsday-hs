@@ -16,6 +16,7 @@ import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
+import Data.Either (isLeft)
 
 
 main :: IO ()
@@ -100,6 +101,14 @@ dayOfWeekTests =
         1 @?= Monday
         Tuesday * 5 @?= Wednesday
         Thursday `div` 4 @?= Monday
+    , testCase "Complete single day" $ matchingDayOfWeek "M" @?= Right [Monday]
+    , testCase "Complete multiple days" $ matchingDayOfWeek "T" @?= Right [Tuesday, Thursday]
+    , testCase "Complete valid number" $ matchingDayOfWeek "0" @?= Right [Sunday]
+    , testCase "Complete invalid number" . assertBool "9" . isLeft $ matchingDayOfWeek "9"
+    , testCase "Parse single day number" $ parseDayOfWeek "0" @?= Right Sunday
+    , testCase "Parse single day prefix" $ parseDayOfWeek "Su" @?= Right Sunday
+    , testCase "Parse single day full" $ parseDayOfWeek "Sunday" @?= Right Sunday
+    , testCase "Parse multiple days" . assertBool "S" . isLeft $ parseDayOfWeek "S"
     ]
  where
   timeShow :: Time.DayOfWeek -> String
