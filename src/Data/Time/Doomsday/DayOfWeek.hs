@@ -30,10 +30,11 @@ instance Pretty DayOfWeek
 
 
 parseDayOfWeek :: String -> Either String DayOfWeek
-parseDayOfWeek s = matchingDayOfWeek s >>= \case
-  [] -> Left "Does not match any day of the week"
-  [d] -> Right d
-  ds -> Left $ "Matches more than one day of the week: " <> intercalate ", " (map show ds)
+parseDayOfWeek s =
+  matchingDayOfWeek s >>= \case
+    [] -> Left "Does not match any day of the week"
+    [d] -> Right d
+    ds -> Left $ "Matches more than one day of the week: " <> intercalate ", " (map show ds)
 
 
 matchingDayOfWeek :: String -> Either String [DayOfWeek]

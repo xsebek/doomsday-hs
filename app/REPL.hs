@@ -9,6 +9,7 @@ import Control.Monad (when)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict
+import Data.Char (isSpace)
 import Data.Functor (($>))
 import Data.List
 import Data.Time (UTCTime, diffUTCTime, getCurrentTime)
@@ -17,7 +18,6 @@ import Data.Time.Doomsday
 import Statistics
 import System.Console.Haskeline
 import Util
-import Data.Char (isSpace)
 
 
 type App a = InputT (StateT SaveData IO) a
@@ -65,7 +65,7 @@ trainingREPL r = do
         Right w -> evalAnswer q v w $> True
 
 
-settings :: MonadIO m => Settings m
+settings :: (MonadIO m) => Settings m
 settings = setComplete (completeWord' Nothing isSpace $ pure . comp) defaultSettings
  where
   comp s = either (const []) (fmap $ simpleCompletion . show) $ matchingDayOfWeek s

@@ -6,6 +6,7 @@ module Main (main) where
 import Control.Monad (forM_)
 import Data.ByteString.Builder
 import Data.ByteString.Lazy qualified as BS
+import Data.Either (isLeft)
 import Data.Function ((&))
 import Data.List (isInfixOf)
 import Data.Time qualified as Time
@@ -16,7 +17,6 @@ import Test.Tasty
 import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
-import Data.Either (isLeft)
 
 
 main :: IO ()
