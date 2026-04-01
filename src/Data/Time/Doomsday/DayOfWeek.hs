@@ -2,10 +2,11 @@ module Data.Time.Doomsday.DayOfWeek (
   DayOfWeek (..),
   daysOfWeek,
   parseDayOfWeek,
+  matchingDayOfWeek,
 ) where
 
 import Data.Char (isDigit, toLower)
-import Data.List (intercalate, isPrefixOf)
+import Data.List (intercalate, isPrefixOf, singleton)
 import Data.Time.Doomsday.Enum.Util qualified as Enum
 import Data.Time.Doomsday.String.Pretty (Pretty)
 
@@ -29,12 +30,17 @@ instance Pretty DayOfWeek
 
 
 parseDayOfWeek :: String -> Either String DayOfWeek
-parseDayOfWeek [d] | d >= '0' && d <= '7' = Right . toEnum $ read [d]
-parseDayOfWeek ds | all isDigit ds = Left "Days of week are numbered 0 to 6 (Sun to Sat) or 1 to 7 (Mon to Sun)"
-parseDayOfWeek s = case filter isPrefixIgnoreCase daysOfWeek of
-  [] -> Left "Does not match any day of the week"
-  [d] -> Right d
-  ds -> Left $ "Matches more than one day of the week: " <> intercalate ", " (map show ds)
+parseDayOfWeek s =
+  matchingDayOfWeek s >>= \case
+    [] -> Left "Does not match any day of the week"
+    [d] -> Right d
+    ds -> Left $ "Matches more than one day of the week: " <> intercalate ", " (map show ds)
+
+
+matchingDayOfWeek :: String -> Either String [DayOfWeek]
+matchingDayOfWeek [d] | d >= '0' && d <= '7' = Right . singleton . toEnum $ read [d]
+matchingDayOfWeek ds | all isDigit ds = Left "Days of week are numbered 0 to 6 (Sun to Sat) or 1 to 7 (Mon to Sun)"
+matchingDayOfWeek s = Right $ filter isPrefixIgnoreCase daysOfWeek
  where
   isPrefixIgnoreCase = isPrefixOf (map toLower s) . map toLower . show
 

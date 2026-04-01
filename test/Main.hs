@@ -6,6 +6,7 @@ module Main (main) where
 import Control.Monad (forM_)
 import Data.ByteString.Builder
 import Data.ByteString.Lazy qualified as BS
+import Data.Either (isLeft)
 import Data.Function ((&))
 import Data.List (isInfixOf)
 import Data.Time qualified as Time
@@ -100,6 +101,14 @@ dayOfWeekTests =
         1 @?= Monday
         Tuesday * 5 @?= Wednesday
         Thursday `div` 4 @?= Monday
+    , testCase "Complete single day" $ matchingDayOfWeek "M" @?= Right [Monday]
+    , testCase "Complete multiple days" $ matchingDayOfWeek "T" @?= Right [Tuesday, Thursday]
+    , testCase "Complete valid number" $ matchingDayOfWeek "0" @?= Right [Sunday]
+    , testCase "Complete invalid number" . assertBool "9" . isLeft $ matchingDayOfWeek "9"
+    , testCase "Parse single day number" $ parseDayOfWeek "0" @?= Right Sunday
+    , testCase "Parse single day prefix" $ parseDayOfWeek "Su" @?= Right Sunday
+    , testCase "Parse single day full" $ parseDayOfWeek "Sunday" @?= Right Sunday
+    , testCase "Parse multiple days" . assertBool "S" . isLeft $ parseDayOfWeek "S"
     ]
  where
   timeShow :: Time.DayOfWeek -> String
