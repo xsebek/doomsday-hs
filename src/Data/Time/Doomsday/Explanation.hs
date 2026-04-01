@@ -86,7 +86,7 @@ instance Pretty Explanation where
       Nothing -> ""
       Just (r, d) ->
         if r == d
-          then FmtAnn Success (format d) <+> "is correct!"
+          then FmtAnn Success "Correct!"
           else FmtAnn Failure (format d) <+> "is wrong!"
 
 
