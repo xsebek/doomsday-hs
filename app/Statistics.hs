@@ -7,6 +7,7 @@ module Statistics (
   loadData,
   showStatistics,
   plotBoxes,
+  plotLine,
 ) where
 
 import Data.Time
@@ -21,7 +22,7 @@ import Control.Exception (catch, IOException)
 import System.Directory (doesFileExist, createDirectoryIfMissing, getXdgDirectory, XdgDirectory (..))
 import GHC.Stack (HasCallStack)
 import System.FilePath ((</>))
-import Granite.String (boxPlot, defPlot, Plot (..))
+import Granite.String (boxPlot, defPlot, Plot (..), lineGraph)
 
 ---------------------------------------------------------------------
 -- DATA
@@ -39,6 +40,12 @@ data Entry = Entry
   , answer :: Maybe DayOfWeek
   , elapsed :: Maybe NominalDiffTime
   }
+
+isCorrect :: Entry -> Bool
+isCorrect e = e.answer == Just e.correct
+
+isWrong :: Entry -> Bool
+isWrong e = not (null e.answer) && e.answer /= Just e.correct
 
 ---------------------------------------------------------------------
 -- LOAD/SAVE
@@ -132,8 +139,8 @@ showStatistics ds = unlines
  where
   es = ds.current
   count = length es
-  successes = filter (\e -> e.answer == Just e.correct) es
-  failures = filter (\e -> not (null e.answer) && e.answer /= Just e.correct) es
+  successes = filter isCorrect es
+  failures = filter isWrong es
   successCount = length successes
   failCount = length failures
   avgSpeed s = if null s then "-" else formatTime defaultTimeLocale "%02Ess" . avgTime $ mapMaybe elapsed s
@@ -158,5 +165,30 @@ plotBoxes (YearMonthDay ty tm _) sd = boxPlot
   (y, ny) = partition ((\(YearMonthDay sy _ _) -> sy == ty) . date) nm
   (c, nc) = partition ((\(YearMonthDay sy _ _) -> sy `div` 100 == ty `div` 100) . date) ny
 
-  successes = filter (\e -> e.answer == Just e.correct) $ allEntries sd
+  successes = filter isCorrect $ allEntries sd
   secs e = maybe (error "missing elapsed time") realToFrac e.elapsed
+
+plotLine :: SaveData -> String
+plotLine sd = lineGraph
+  [ ("Accuracy (last " <> show wSize <> ")", zip [1..] line)
+  ]
+  defPlot
+    { plotTitle = "Accuracy over time"
+    , xBounds = (Just 1, Just $ c)
+    , yBounds = (Just 0, Just 1)
+    , xNumTicks = if even c' then 10 else 8
+    , xFormatter = \_ _ x -> show @Int $ floor x
+    }
+ where
+  wSize = 7
+  es = allEntries sd
+  c = fromIntegral c'
+  c' = length es
+  lengthG = fromIntegral . length
+  avg s = if null s then 0 else lengthG (filter isCorrect s) / lengthG s
+  line = windowOf wSize avg es
+
+windowOf :: Int -> ([a] -> b) -> [a] -> [b]
+windowOf windowSize f ds = reverse . snd $ foldl' window ([], []) (reverse ds)
+ where
+  window (w, acc) d = let w' = take windowSize (d : w) in (w', f w' : acc)
