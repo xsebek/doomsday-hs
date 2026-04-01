@@ -226,9 +226,9 @@ explanationTests =
     , goldenVsString "Terminal evaluated whole explanation" "test/data/terminal_evaluated.golden" $
         prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just EQ}
     , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_correct.golden" $
-        prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just LT, response=Just Friday}
+        prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just LT, response = Just Friday}
     , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_wrong.golden" $
-        prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response=Just Monday}
+        prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
     ]
  where
   d = Date 2026 02 27
