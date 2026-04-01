@@ -30,7 +30,7 @@ enumFromThenToEqZeroBased start next end
   | next == end = [start, end]
   | otherwise = start : enumFromThenToEqZeroBased next next2 end
  where
-  next2 = toEnum $ (2 * fromEnum next) - (fromEnum start)
+  next2 = toEnum $ (2 * fromEnum next) - fromEnum start
 
 newtype Pred e = Pred { getPred :: e }
   deriving (Eq, Ord)

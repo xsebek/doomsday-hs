@@ -13,7 +13,6 @@ import Data.Time.Calendar.Month qualified as Time
 import Data.Time.Calendar.MonthDay qualified as Time
 import Data.Function ((&))
 import Control.Monad (forM_)
-import Data.Enum (enumerate)
 import Data.ByteString.Builder
 import Data.ByteString.Lazy qualified as BS
 import Data.List (isInfixOf)
@@ -54,7 +53,7 @@ monthTests = testGroup "Month tests"
     forM_ timeAllMonths $ \m ->
       show (toEnum @Month m) @?= timeShow (timeMonth m)
   , testCase "Month length" $ 
-    forM_ enumerate $ \isLeap ->
+    forM_ [minBound .. maxBound] $ \isLeap ->
       forM_ timeAllMonths $ \m ->
         monthLength isLeap (toEnum m) @?= Time.monthLength isLeap m
   , testCase "Month number" $ toEnum 13 @?= January
@@ -111,7 +110,7 @@ daysFromToTests = testGroup "Date distance tests"
 
 mnemonicTests :: TestTree
 mnemonicTests = testGroup "Mnemonics"
-  [ testCase "Default mnemonic has all months" . forM_ enumerate $ \isLeap -> forM_ allMonths $ \m ->
+  [ testCase "Default mnemonic has all months" . forM_ [minBound .. maxBound] $ \isLeap -> forM_ allMonths $ \m ->
     let mnms = fst <$> mnMonths isLeap
     in assertBool ("There should be a mnemonic for " <> show m) (m `elem` mnms)
   , testCase "Default mnemonic is correctly on doomsday" . forM_ [2024, 2025] $ \y -> do

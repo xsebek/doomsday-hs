@@ -82,9 +82,9 @@ infixr 4 ^===
 eqConcat :: Equation -> Equation -> Equation
 eqConcat e1 e2 = case eqToEither e1 of
   Right r -> r :== e2
-  Left (ex, eOp, eq) -> ex `eOp` (eqConcat eq e2)
+  Left (ex, eOp, eq) -> ex `eOp` eqConcat eq e2
 
 equivConcat :: Equation -> Equation -> Equation
 equivConcat e1 e2 = case eqToEither e1 of
   Right r -> r :=== e2
-  Left (ex, eOp, eq) -> ex `eOp` (eqConcat eq e2)
+  Left (ex, eOp, eq) -> ex `eOp` eqConcat eq e2

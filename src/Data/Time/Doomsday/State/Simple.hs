@@ -19,7 +19,7 @@ put = modify . const
 
 instance Applicative (State s) where
   pure :: a -> State s a
-  pure a = State $ \s -> (s, a)
+  pure a = State (, a)
   (<*>) :: State s (a -> b) -> State s a -> State s b
   State f <*> State g = State $ \s -> 
     let (s1, h) = f s
@@ -28,4 +28,4 @@ instance Applicative (State s) where
 
 instance Monad (State s) where
   (>>=) :: State s a -> (a -> State s b) -> State s b
-  State f >>= g = State $ \s -> let (s1, a) = f s in ($ s1) . runState $ g a
+  State f >>= g = State $ \s -> let (s1, a) = f s in flip runState s1$ g a

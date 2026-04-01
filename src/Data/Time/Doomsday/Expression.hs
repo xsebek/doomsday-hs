@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Data.Time.Doomsday.Expression (
   Expression (..),
   eval,
@@ -9,7 +7,6 @@ module Data.Time.Doomsday.Expression (
 import Data.Time.Doomsday.DayOfWeek
 import Data.Time.Doomsday.String.Pretty
 import Data.Foldable (find)
-import Data.Maybe (fromMaybe)
 
 data Expression
   = EConst Int
@@ -46,7 +43,7 @@ substitute vars = \case
   EDiv e1 e2 -> substitute vars e1 `EDiv` substitute vars e2
   EMod e1 e2 -> substitute vars e1 `EMod` substitute vars e2 
  where
-  fv v = fromMaybe (EVar v) . fmap snd $ find ((==v) . fst) vars
+  fv v = maybe (EVar v) snd $ find ((==v) . fst) vars
 
 instance Pretty Expression where
   format = FmtStr . go 12
