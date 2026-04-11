@@ -21,7 +21,7 @@ main = do
       putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation{relativeTo = Just relative}
     Train t -> trainingREPL t.range
     Stats -> loadData >>= putStrLn . showRangeStatistics
-    Plot Bars -> loadData >>= putStrLn . plotBoxes
+    Plot Boxes -> loadData >>= putStrLn . plotBoxes
     Plot Line -> loadData >>= putStrLn . plotLine
  where
   opts =
@@ -67,7 +67,7 @@ plotCommand :: Parser Command
 plotCommand =
   Plot
     <$> hsubparser
-      ( command "bars" (info (pure Bars) idm)
+      ( command "boxes" (info (pure Boxes) idm)
           <> command "line" (info (pure Line) idm)
       )
 
@@ -85,4 +85,4 @@ data ExplainParams = ExplainParams {date :: Date}
 data TrainParams = TrainParams {range :: DateRange}
 
 
-data PlotParams = Bars | Line
+data PlotParams = Boxes | Line
