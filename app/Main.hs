@@ -20,13 +20,11 @@ main = do
       -- TODO: detect terminal output by hIsTerminalDevice
       putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation{relativeTo = Just relative}
     Train t -> trainingREPL t.range
-    Stats p -> do
-      d <- getToday
-      sd <- loadData
-      case p of
-        Bars -> putStrLn $ plotBoxes d sd
-        Line -> putStrLn $ plotLine sd
-        List -> putStrLn $ showStatistics sd
+    Stats p ->
+      loadData >>= case p of
+        Bars -> putStrLn . plotBoxes
+        Line -> putStrLn . plotLine
+        List -> putStrLn . showStatistics
  where
   opts =
     info
