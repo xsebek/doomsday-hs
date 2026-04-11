@@ -172,8 +172,8 @@ allEntries :: SaveData -> [Entry]
 allEntries sd = sd.current <> sd.previous
 
 
-plotBoxes :: Day -> SaveData -> String
-plotBoxes (YearMonthDay ty tm _) sd =
+plotBoxes :: SaveData -> String
+plotBoxes sd =
   boxPlot
     [ ("Same month", map secs m)
     , ("Other month", map secs y)
@@ -185,10 +185,14 @@ plotBoxes (YearMonthDay ty tm _) sd =
       , yBounds = (Just 0, Nothing)
       }
  where
-  -- TODO: this should use the date in entry, not today
-  (m, nm) = partition ((\(YearMonthDay _ sm _) -> sm == tm) . date) successes
-  (y, ny) = partition ((\(YearMonthDay sy _ _) -> sy == ty) . date) nm
-  (c, nc) = partition ((\(YearMonthDay sy _ _) -> sy `div` 100 == ty `div` 100) . date) ny
+  (m, nm) = partition (predEntry sameMonth) successes
+  (y, ny) = partition (predEntry sameYear) nm
+  (c, nc) = partition (predEntry sameCentury) ny
+
+  predEntry p e = p (utctDay e.start) e.date
+  sameMonth (YearMonthDay _ am _) (YearMonthDay _ bm _) = am == bm
+  sameYear (YearMonthDay ay _ _) (YearMonthDay by _ _) = ay == by
+  sameCentury (YearMonthDay ay _ _) (YearMonthDay by _ _) = ay `div` 100 == by `div` 100
 
   successes = filter isCorrect $ allEntries sd
   secs e = maybe (error "missing elapsed time") realToFrac e.elapsed
