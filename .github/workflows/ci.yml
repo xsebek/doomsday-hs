@@ -28,8 +28,8 @@ jobs:
         if: matrix.os == 'macos-latest'
         with:
           path: ~/.ghcup
-          key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}
-          restore-keys: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}
+          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}
+          restore-keys: ${{ runner.os }}-ghc-${{ matrix.ghc }}
 
       - uses: haskell-actions/setup@v2
         id: setup-haskell-cabal
