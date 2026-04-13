@@ -6,6 +6,7 @@ module Statistics (
   Entry (..),
   saveData,
   loadData,
+  showRangeStatistics,
   showStatistics,
   plotBoxes,
   plotLine,
@@ -150,21 +151,39 @@ parseLine s = case trim <$> splitOn "," s of
 -- STATS
 ---------------------------------------------------------------------
 
-showStatistics :: SaveData -> String
-showStatistics ds =
+showRangeStatistics :: SaveData -> String
+showRangeStatistics sd =
   unlines
-    [ "Average: " <> if count == 0 then "n/a" else show ((100 * successCount) `div` count) <> "%"
-    , "Count correct/wrong/total: " <> show successCount <> "/" <> show failCount <> "/" <> show count
-    , "Speed correct/wrong/average: " <> avgSpeed successes <> "/" <> avgSpeed failures <> "/" <> avgSpeed es
+    [ "Overall"
+    , showStatistics $ allEntries sd
+    , "Same month"
+    , get Month
+    , "Other month"
+    , get Year
+    , "Other year"
+    , get Century
+    , "Other centuries"
+    , get Alltime
     ]
  where
-  es = ds.current
+  rs = partitionEntries $ allEntries sd
+  get r = showStatistics . concatMap snd $ filter ((== r) . fst) rs
+
+
+showStatistics :: [Entry] -> String
+showStatistics es =
+  unlines
+    [ " * Average: " <> if count == 0 then "n/a" else show ((100 * successCount) `div` count) <> "%"
+    , " * Count correct/wrong/total: " <> show successCount <> "/" <> show failCount <> "/" <> show count
+    , " * Speed correct/wrong/average: " <> avgSpeed successes <> "/" <> avgSpeed failures <> "/" <> avgSpeed es
+    ]
+ where
   count = length es
   successes = filter isCorrect es
   failures = filter isWrong es
   successCount = length successes
   failCount = length failures
-  avgSpeed s = if null s then "-" else formatTime defaultTimeLocale "%02Ess" . avgTime $ mapMaybe elapsed s
+  avgSpeed ms = let s = mapMaybe elapsed ms in if null s then "-" else formatTime defaultTimeLocale "%02Ess" $ avgTime s
   avgTime s = sum s / fromIntegral (length s)
 
 
@@ -175,27 +194,32 @@ allEntries sd = sd.current <> sd.previous
 plotBoxes :: SaveData -> String
 plotBoxes sd =
   boxPlot
-    [ ("Same month", map secs m)
-    , ("Other month", map secs y)
-    , ("Other year", map secs c)
-    , ("Other centuries", map secs nc)
+    [ ("Same month", get Month)
+    , ("Other month", get Year)
+    , ("Other year", get Century)
+    , ("Other centuries", get Alltime)
     ]
     defPlot
       { plotTitle = "Elapsed time to correct answer"
       , yBounds = (Just 0, Nothing)
       }
  where
-  (m, nm) = partition (predEntry sameMonth) successes
+  successes = filter isCorrect $ allEntries sd
+  rs = partitionEntries successes
+  secs e = maybe (error "missing elapsed time") realToFrac e.elapsed
+  get r = concatMap (map secs . snd) $ filter ((== r) . fst) rs
+
+
+partitionEntries :: [Entry] -> [(DateRange, [Entry])]
+partitionEntries es = [(Month, m), (Year, y), (Century, c), (Alltime, nc)]
+ where
+  (m, nm) = partition (predEntry sameMonth) es
   (y, ny) = partition (predEntry sameYear) nm
   (c, nc) = partition (predEntry sameCentury) ny
-
   predEntry p e = p (utctDay e.start) e.date
   sameMonth (YearMonthDay _ am _) (YearMonthDay _ bm _) = am == bm
   sameYear (YearMonthDay ay _ _) (YearMonthDay by _ _) = ay == by
   sameCentury (YearMonthDay ay _ _) (YearMonthDay by _ _) = ay `div` 100 == by `div` 100
-
-  successes = filter isCorrect $ allEntries sd
-  secs e = maybe (error "missing elapsed time") realToFrac e.elapsed
 
 
 plotLine :: SaveData -> String

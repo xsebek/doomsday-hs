@@ -50,7 +50,7 @@ trainingREPL r = do
       else do
         sd <- lift get
         liftIO $ saveData sd
-        outputStrLn $ showStatistics sd
+        outputStrLn $ showStatistics sd.current
   run :: QueryData -> App Bool
   run q = do
     let is = maybe "is" tense q.explanation.relativeTo

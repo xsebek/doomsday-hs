@@ -7,7 +7,7 @@ import Data.List (intercalate)
 import Data.Time.Doomsday
 import Options.Applicative
 import REPL
-import Statistics (loadData, plotBoxes, plotLine, showStatistics)
+import Statistics
 import Util
 
 
@@ -20,11 +20,9 @@ main = do
       -- TODO: detect terminal output by hIsTerminalDevice
       putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation{relativeTo = Just relative}
     Train t -> trainingREPL t.range
-    Stats p ->
-      loadData >>= case p of
-        Bars -> putStrLn . plotBoxes
-        Line -> putStrLn . plotLine
-        List -> putStrLn . showStatistics
+    Stats -> loadData >>= putStrLn . showRangeStatistics
+    Plot Boxes -> loadData >>= putStrLn . plotBoxes
+    Plot Line -> loadData >>= putStrLn . plotLine
  where
   opts =
     info
@@ -40,7 +38,8 @@ parser =
   hsubparser
     ( command "explain" (info explainCommand (progDesc "Explain the doomsday algorithm for a given date"))
         <> command "train" (info trainCommand (progDesc "Train the doomsday algorithm in a read-eval loop"))
-        <> command "plot" (info plotCommand (progDesc "Show plots and statistics."))
+        <> command "plot" (info plotCommand (progDesc "Show plots of accuracy and speed."))
+        <> command "stats" (info (pure Stats) (progDesc "List statistics of accuracy and speed."))
     )
 
 
@@ -66,18 +65,18 @@ trainCommand =
 
 plotCommand :: Parser Command
 plotCommand =
-  Stats
+  Plot
     <$> hsubparser
-      ( command "bars" (info (pure Bars) idm)
+      ( command "boxes" (info (pure Boxes) idm)
           <> command "line" (info (pure Line) idm)
-          <> command "list" (info (pure List) idm)
       )
 
 
 data Command
   = Explain ExplainParams
   | Train TrainParams
-  | Stats StatsParams
+  | Plot PlotParams
+  | Stats
 
 
 data ExplainParams = ExplainParams {date :: Date}
@@ -86,4 +85,4 @@ data ExplainParams = ExplainParams {date :: Date}
 data TrainParams = TrainParams {range :: DateRange}
 
 
-data StatsParams = Bars | Line | List
+data PlotParams = Boxes | Line
