@@ -1,4 +1,4 @@
-Find the century anchor. Starting with year [34mY[39m:
+[2mFind the century anchor. Starting with year [34mY[39m:
  - take the century digits [3mC = Y / 100[23m
  - in a four century cycle its index is [3mF = C % 4[23m
  - the resulting increment is [3mI = F * 5[23m
@@ -15,3 +15,4 @@ Find the weekday. Starting with date [34mD[39m:
  - this months doomsday is [3mO[23m
  - the resulting increment is [3mI = D - O[23m
  - add the year anchor to get [3mR = [33mW + I[39m[23m
+[22m

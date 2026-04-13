@@ -74,14 +74,14 @@ data VarType = VDay | VInt
 ---------------------------------------------------------------------
 
 instance Pretty Explanation where
-  format expl = FmtParagraphs $ map format expl.parts <> res
+  format expl = FmtAnn Note (FmtParagraphs $ map format expl.parts) <> res
    where
     res = case (expl.relativeTo, expl.result) of
       (Just o, Just r) ->
         let is = tense o
             resWeekday = FmtAnn Result (format r)
-         in [guess <+> "The weekday" <+> is <+> resWeekday <> "."]
-      _ -> []
+         in guess <+> "The weekday" <+> is <+> resWeekday <> "."
+      _ -> mempty
     guess = case (,) <$> expl.result <*> expl.response of
       Nothing -> ""
       Just (r, d) ->
