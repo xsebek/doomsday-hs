@@ -183,7 +183,7 @@ showStatistics es =
   failures = filter isWrong es
   successCount = length successes
   failCount = length failures
-  avgSpeed s = if null s then "-" else formatTime defaultTimeLocale "%02Ess" . avgTime $ mapMaybe elapsed s
+  avgSpeed ms = let s = mapMaybe elapsed ms in if null s then "-" else formatTime defaultTimeLocale "%02Ess" $ avgTime s
   avgTime s = sum s / fromIntegral (length s)
 
 
