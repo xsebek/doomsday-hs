@@ -1,4 +1,4 @@
-Find the century anchor. Starting with year [34m2026[39m:
+[2mFind the century anchor. Starting with year [34m2026[39m:
  - take the century digits [3mC = Y / 100 = 2026 / 100 = 20[23m
  - in a four century cycle its index is [3mF = C % 4 = 20 % 4 = 0[23m
  - the resulting increment is [3mI = F * 5 = 0 * 5 = 0 ≡ Sunday[23m
@@ -15,5 +15,4 @@ Find the weekday. Starting with date [34m27 February 2026[39m:
  - this months doomsday is [3mO = 28[23m (the last day of February)
  - the resulting increment is [3mI = D - O = 27 - 28 = -1 ≡ Saturday[23m
  - add the year anchor to get [3mR = W + I = Saturday + Saturday = 12 ≡ [33mFriday[39m[23m
-
-The weekday is [33mFriday[39m.
+[22mThe weekday is [33mFriday[39m.

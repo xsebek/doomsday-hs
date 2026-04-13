@@ -52,7 +52,7 @@ data Format
   | FmtParagraphs [Format]
 
 
-data Annotation = Math | Failure | Success | Result | Input
+data Annotation = Math | Failure | Success | Result | Input | Note
 
 
 instance Pretty Format where
@@ -73,6 +73,9 @@ formatPlain = formatTerminal (const ("", ""))
 type TermColors = Annotation -> (String, String)
 
 
+-- | Set/Reset ANSI terminal colors.
+--
+-- See this helpful Gist https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 termColors :: TermColors
 termColors = \case
   Math -> ("\ESC[3m\STX", "\ESC[23m\STX")
@@ -80,6 +83,7 @@ termColors = \case
   Success -> c "\ESC[32m\STX"
   Result -> c "\ESC[33m\STX"
   Input -> c "\ESC[34m\STX"
+  Note -> ("\ESC[2m\STX", "\ESC[22m\STX")
  where
   -- reset to default foreground color
   c = (,"\ESC[39m\STX")
@@ -103,6 +107,10 @@ instance Semigroup Format where
   f1 <> f2 = FmtConcat [f1, f2]
 
 
+instance Monoid Format where
+  mempty = FmtStr ""
+
+
 isEmpty :: Format -> Bool
 isEmpty = \case
   FmtStr s -> null s
@@ -120,7 +128,10 @@ f1 <+> f2
 
 
 ($+$) :: Format -> Format -> Format
-f1 $+$ f2 = format f1 <> FmtStr "\n" <> format f2
+f1 $+$ f2
+  | isEmpty f1 = f2
+  | isEmpty f2 = f1
+  | otherwise = format f1 <> FmtStr "\n" <> format f2
 
 
 tense :: Ordering -> Format
