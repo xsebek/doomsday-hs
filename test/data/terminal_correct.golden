@@ -7,7 +7,9 @@
 Find the year anchor. Starting with year [34m2026[39m:
  - note the century anchor [3mA = Tuesday[23m
  - take the last two digits [3mT = Y % 100 = 2026 % 100 = 26[23m
- - the resulting increment is [3mI = T + T/4 = 26 + 26/4 = 32 ≡ Thursday[23m
+ - divide them by twelve [3mD = T / 12 = 26 / 12 = 2[23m
+ - and take the reminder [3mR = T % 12 = 26 % 12 = 2[23m
+ - the resulting increment is [3mI = (D + R) + R/4 = (2 + 2) + 2/4 = 4 ≡ Thursday[23m
  - add the century anchor to get [3mW = A + I = Tuesday + Thursday = 6 ≡ [33mSaturday[39m[23m
 
 Find the weekday. Starting with date [34m27 February 2026[39m:

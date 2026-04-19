@@ -7,7 +7,9 @@
 Find the year anchor. Starting with year [34mY[39m:
  - note the century anchor [3mA[23m
  - take the last two digits [3mT = Y % 100[23m
- - the resulting increment is [3mI = T + T/4[23m
+ - divide them by twelve [3mD = T / 12[23m
+ - and take the reminder [3mR = T % 12[23m
+ - the resulting increment is [3mI = (D + R) + R/4[23m
  - add the century anchor to get [3mW = [33mA + I[39m[23m
 
 Find the weekday. Starting with date [34mD[39m:
