@@ -43,3 +43,13 @@ randomDate dr (Date ty tm td) = do
  where
   randomDateR :: (Num a) => DateRange -> (Integer, Integer) -> a -> IO a
   randomDateR drMin r v = if dr >= drMin then fromInteger <$> R.applyAtomicGen (R.uniformR r) R.globalStdGen else pure v
+
+
+data Formula = Conways | Div4
+  deriving (Bounded, Enum, Eq, Ord, Read, Show)
+
+
+explanationForm :: Formula -> Explanation
+explanationForm = \case
+  Conways -> doomsdayExplanation
+  Div4 -> doomsdayExplanationDiv4

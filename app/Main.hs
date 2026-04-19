@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Main (main) where
 
@@ -18,8 +19,8 @@ main = do
     Explain e -> do
       relative <- (toTime e.date `compare`) <$> getToday
       -- TODO: detect terminal output by hIsTerminalDevice
-      putStrLn . prettyTerm $ evalExplanation e.date doomsdayExplanation{relativeTo = Just relative}
-    Train t -> trainingREPL t.range
+      putStrLn . prettyTerm $ evalExplanation e.date (explanationForm e.formula){relativeTo = Just relative}
+    Train t -> trainingREPL t.formula t.range
     Stats -> loadData >>= putStrLn . showRangeStatistics
     Plot Boxes -> loadData >>= putStrLn . plotBoxes
     Plot Line -> loadData >>= putStrLn . plotLine
@@ -32,6 +33,11 @@ main = do
           <> fullDesc
       )
 
+data Command
+  = Explain ExplainParams
+  | Train TrainParams
+  | Plot PlotParams
+  | Stats
 
 parser :: Parser Command
 parser =
@@ -42,17 +48,27 @@ parser =
         <> command "stats" (info (pure Stats) (progDesc "List statistics of accuracy and speed."))
     )
 
+data ExplainParams = ExplainParams
+  { formula :: Formula
+  , date :: Date
+  }
 
 explainCommand :: Parser Command
 explainCommand =
-  Explain . ExplainParams
-    <$> argument (eitherReader readIsoDate) (metavar "YYYY-MM-DD")
+  fmap Explain $ ExplainParams
+    <$> parseFormula
+    <*> argument (eitherReader readIsoDate) (metavar "YYYY-MM-DD")
 
+data TrainParams = TrainParams
+  { formula :: Formula
+  , range :: DateRange
+  }
 
 trainCommand :: Parser Command
 trainCommand =
-  Train . TrainParams
-    <$> option
+  fmap Train $ TrainParams
+    <$> parseFormula
+    <*> option
       auto
       ( long "range"
           <> short 'r'
@@ -62,6 +78,7 @@ trainCommand =
           <> showDefault
       )
 
+data PlotParams = Boxes | Line
 
 plotCommand :: Parser Command
 plotCommand =
@@ -71,18 +88,13 @@ plotCommand =
           <> command "line" (info (pure Line) idm)
       )
 
-
-data Command
-  = Explain ExplainParams
-  | Train TrainParams
-  | Plot PlotParams
-  | Stats
-
-
-data ExplainParams = ExplainParams {date :: Date}
-
-
-data TrainParams = TrainParams {range :: DateRange}
-
-
-data PlotParams = Boxes | Line
+parseFormula :: Parser Formula
+parseFormula = option
+      auto
+      ( long "formula"
+          <> short 'f'
+          <> metavar "FORMULA"
+          <> value Conways
+          <> help ("Use Doomsday formula " <> intercalate "|" (show @Formula <$> [minBound .. maxBound]))
+          <> showDefault
+      )
