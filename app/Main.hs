@@ -21,7 +21,7 @@ main = do
       relative <- (toTime e.date `compare`) <$> getToday
       -- TODO: detect terminal output by hIsTerminalDevice
       putStrLn . prettyTerm $ evalExplanation e.date (explanationForm e.formula){relativeTo = Just relative}
-    Train t -> trainingREPL t.formula t.range
+    Repl t -> trainingREPL t.formula t.range
     Stats -> loadData >>= putStrLn . showRangeStatistics
     Plot Boxes -> loadData >>= putStrLn . plotBoxes
     Plot Line -> loadData >>= putStrLn . plotLine
@@ -37,7 +37,7 @@ main = do
 
 data Command
   = Explain ExplainParams
-  | Train TrainParams
+  | Repl ReplParams
   | Plot PlotParams
   | Stats
 
@@ -46,7 +46,7 @@ parser :: Parser Command
 parser =
   hsubparser . mconcat $
     [ command "explain" (info (Explain <$> explainParams) (progDesc "Explain the doomsday algorithm for a given date"))
-    , command "train" (info (Train <$> trainParams) (progDesc "Train the doomsday algorithm in a read-eval loop"))
+    , command "repl" (info (Repl <$> trainParams) (progDesc "Train the doomsday algorithm in a read-eval-print loop"))
     , command "plot" (info (Plot <$> plotParams) (progDesc "Show plots of accuracy and speed."))
     , command "stats" (info (pure Stats) (progDesc "List statistics of accuracy and speed."))
     ]
@@ -67,13 +67,13 @@ explainParams =
   parseDate = argument (eitherReader readIsoDate) (metavar "YYYY-MM-DD")
 
 
-data TrainParams = TrainParams
+data ReplParams = TrainParams
   { formula :: Formula
   , range :: DateRange
   }
 
 
-trainParams :: Parser TrainParams
+trainParams :: Parser ReplParams
 trainParams =
   TrainParams
     <$> formulaOption
