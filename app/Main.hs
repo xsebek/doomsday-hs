@@ -114,4 +114,4 @@ formulaOption =
 
 
 showValues :: forall a -> (Bounded a, Enum a, Show a) => String
-showValues a = intercalate "|" (show @a <$> [minBound .. maxBound])
+showValues a = "[" <> intercalate "|" (show @a <$> [minBound .. maxBound]) <> "]"
