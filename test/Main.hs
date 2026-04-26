@@ -204,55 +204,55 @@ explanationTests =
     [ testCase "Part builder returns result variable" $ do
         centuryVar @?= EVar 'A'
         yearVar @?= EVar 'W'
-    , testGroup "Century"
-      [ goldenVsString "Pretty abstract century explanation" "test/data/century_abstract.golden" $
-          prettyIO centuryExpl
-      , goldenVsString "Pretty evaluated century explanation" "test/data/century_evaluated.golden" $
-          prettyIO (evalExplanation d centuryExpl)
-      ]
-    , testGroup "Year"
-      [ goldenVsString "Pretty abstract year explanation" "test/data/year_abstract.golden" $
-          prettyIO yearExpl
-      , goldenVsString "Pretty evaluated year explanation" "test/data/year_evaluated.golden" $
-          prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl)
-      ]
-    , testGroup "Year with division by 4"
-      [ goldenVsString "Pretty abstract year explanation" "test/data/year4_abstract.golden" $
-          prettyIO yearExpl4
-      , goldenVsString "Pretty evaluated year explanation" "test/data/year4_evaluated.golden" $
-          prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl4)
-      ]
-    , testGroup "Year with odd + 11"
-      [ goldenVsString "Pretty abstract year explanation" "test/data/year11_abstract.golden" $
-          prettyIO yearExp11
-      , goldenVsString "Pretty evaluated year explanation" "test/data/year11_evaluated.golden" $
-          prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExp11)
-      ]
-    , testGroup "Weekday"
-      [ goldenVsString "Pretty abstract weekday explanation" "test/data/week_abstract.golden" $
-          prettyIO weekExpl
-      , goldenVsString "Pretty evaluated weekday explanation" "test/data/week_evaluated.golden" $
-          prettyIO (evalExplanationWith [('W', EDay Saturday)] weekExpl)
-      ]
-    , testGroup "Whole explanation"
-      [ goldenVsString "Pretty abstract whole explanation" "test/data/whole_abstract.golden" $
-          prettyIO doomsdayExplanation
-      , goldenVsString "Pretty evaluated whole explanation" "test/data/whole_evaluated.golden" $
-          prettyIO (evalExplanation d doomsdayExplanation){relativeTo = Just EQ}
-      , goldenVsString "Terminal abstract whole explanation" "test/data/terminal_abstract.golden" $
-          prettyTermIO doomsdayExplanation
-      , goldenVsString "Terminal evaluated whole explanation" "test/data/terminal_evaluated.golden" $
-          prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just EQ}
-      , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_correct.golden" $
-          prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just LT, response = Just Friday}
-      , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_wrong.golden" $
-          prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
-      ]
-    , testGroup "Check explanation result against Time"
-      [ sameDayAsTime "Conways" doomsdayExplanation
-      , sameDayAsTime "Div 4" doomsdayExplanationDiv4
-      , sameDayAsTime "Odd 11" doomsdayExplanationOdd11
-      ]
+    , testGroup "Century" $
+        [ goldenVsString "Pretty abstract century explanation" "test/data/century_abstract.golden" $
+            prettyIO centuryExpl
+        , goldenVsString "Pretty evaluated century explanation" "test/data/century_evaluated.golden" $
+            prettyIO (evalExplanation d centuryExpl)
+        ]
+    , testGroup "Year" $
+        [ goldenVsString "Pretty abstract year explanation" "test/data/year_abstract.golden" $
+            prettyIO yearExpl
+        , goldenVsString "Pretty evaluated year explanation" "test/data/year_evaluated.golden" $
+            prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl)
+        ]
+    , testGroup "Year with division by 4" $
+        [ goldenVsString "Pretty abstract year explanation" "test/data/year4_abstract.golden" $
+            prettyIO yearExpl4
+        , goldenVsString "Pretty evaluated year explanation" "test/data/year4_evaluated.golden" $
+            prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl4)
+        ]
+    , testGroup "Year with odd + 11" $
+        [ goldenVsString "Pretty abstract year explanation" "test/data/year11_abstract.golden" $
+            prettyIO yearExp11
+        , goldenVsString "Pretty evaluated year explanation" "test/data/year11_evaluated.golden" $
+            prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExp11)
+        ]
+    , testGroup "Weekday" $
+        [ goldenVsString "Pretty abstract weekday explanation" "test/data/week_abstract.golden" $
+            prettyIO weekExpl
+        , goldenVsString "Pretty evaluated weekday explanation" "test/data/week_evaluated.golden" $
+            prettyIO (evalExplanationWith [('W', EDay Saturday)] weekExpl)
+        ]
+    , testGroup "Whole explanation" $
+        [ goldenVsString "Pretty abstract whole explanation" "test/data/whole_abstract.golden" $
+            prettyIO doomsdayExplanation
+        , goldenVsString "Pretty evaluated whole explanation" "test/data/whole_evaluated.golden" $
+            prettyIO (evalExplanation d doomsdayExplanation){relativeTo = Just EQ}
+        , goldenVsString "Terminal abstract whole explanation" "test/data/terminal_abstract.golden" $
+            prettyTermIO doomsdayExplanation
+        , goldenVsString "Terminal evaluated whole explanation" "test/data/terminal_evaluated.golden" $
+            prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just EQ}
+        , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_correct.golden" $
+            prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just LT, response = Just Friday}
+        , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_wrong.golden" $
+            prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
+        ]
+    , testGroup "Check explanation result against Time" $
+        [ sameDayAsTime "Conways" doomsdayExplanation
+        , sameDayAsTime "Div 4" doomsdayExplanationDiv4
+        , sameDayAsTime "Odd 11" doomsdayExplanationOdd11
+        ]
     ]
  where
   d = Date 2026 02 27
@@ -269,10 +269,10 @@ explanationTests =
   prettyTermIO = pure . toLazyByteString . mconcat . map charUtf8 . prettyTerm
   sameDayAsTime :: String -> Explanation -> TestTree
   sameDayAsTime name expl = testProperty name $ \(D td) ->
-        let dd = toDate td
-            eExpl = evalExplanation dd expl
-            expected = toEnum @DayOfWeek . fromEnum $ Time.dayOfWeek td
-        in case eExpl.result of
+    let dd = toDate td
+        eExpl = evalExplanation dd expl
+        expected = toEnum @DayOfWeek . fromEnum $ Time.dayOfWeek td
+     in case eExpl.result of
           Nothing -> property False
           Just res -> (res === expected) & tabulate "century" [(<> "th") . show $ dd.year `div` 100]
 

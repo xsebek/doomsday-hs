@@ -6,10 +6,13 @@ module Data.Time.Doomsday (
   findCenturyAnchor,
   findYearAnchor,
   findWeekday,
+
   -- * Custom algorithm versions
+
   -- ** Simpler formula with division by 4
   doomsdayExplanationDiv4,
   findYearAnchorDiv4,
+
   -- ** Odd + 11 method
   doomsdayExplanationOdd11,
   findYearAnchorOdd11,
@@ -18,15 +21,19 @@ module Data.Time.Doomsday (
   module Expression,
   module Equation,
   module Explanation,
+
   -- ** Mnemonics
   module Mnemonic,
+
   -- ** Calendar
   module D,
   module Y,
   module M,
   module W,
+
   -- ** Simple state
   State (..),
+
   -- ** Simple pretty printing
   module Pretty,
 ) where
@@ -106,6 +113,7 @@ findYearAnchorDiv4 centuryAnchor =
 
 doomsdayExplanationOdd11 :: Explanation
 doomsdayExplanationOdd11 = explanation $ findCenturyAnchor >>= findYearAnchorOdd11 >>= findWeekday
+
 
 -- | The odd plus 11 method by Chamberlain Fong and Michael K. Walters.
 --
