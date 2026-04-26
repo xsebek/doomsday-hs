@@ -130,8 +130,6 @@ daysFromToTests =
          in daysFromTo (toDate a) (toDate b) === fromInteger (b `Time.diffDays` a)
               & classify (da.year == db.year) "same year"
     ]
- where
-  toDate (Time.YearMonthDay y m d) = Date y (toEnum m) d
 
 
 mnemonicTests :: TestTree
@@ -250,6 +248,11 @@ explanationTests =
       , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_wrong.golden" $
           prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
       ]
+    , testGroup "Check explanation result against Time"
+      [ sameDayAsTime "Conways" doomsdayExplanation
+      , sameDayAsTime "Div 4" doomsdayExplanationDiv4
+      , sameDayAsTime "Odd 11" doomsdayExplanationOdd11
+      ]
     ]
  where
   d = Date 2026 02 27
@@ -264,6 +267,14 @@ explanationTests =
   prettyIO = pure . toLazyByteString . mconcat . map charUtf8 . pretty
   prettyTermIO :: (Pretty a) => a -> IO BS.ByteString
   prettyTermIO = pure . toLazyByteString . mconcat . map charUtf8 . prettyTerm
+  sameDayAsTime :: String -> Explanation -> TestTree
+  sameDayAsTime name expl = testProperty name $ \(D td) ->
+        let dd = toDate td
+            eExpl = evalExplanation dd expl
+            expected = toEnum @DayOfWeek . fromEnum $ Time.dayOfWeek td
+        in case eExpl.result of
+          Nothing -> property False
+          Just res -> (res === expected) & tabulate "century" [(<> "th") . show $ dd.year `div` 100]
 
 
 -- -----------------------------------------------------------------
@@ -294,3 +305,7 @@ instance Arbitrary D where
 
 d2000 :: Time.Day
 d2000 = Time.YearMonthDay 2000 01 01
+
+
+toDate :: Time.Day -> Date
+toDate (Time.YearMonthDay y m d) = Date y (toEnum m) d
