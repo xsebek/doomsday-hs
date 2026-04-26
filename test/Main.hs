@@ -224,6 +224,12 @@ explanationTests =
       , goldenVsString "Pretty evaluated year explanation" "test/data/year4_evaluated.golden" $
           prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExpl4)
       ]
+    , testGroup "Year with odd + 11"
+      [ goldenVsString "Pretty abstract year explanation" "test/data/year11_abstract.golden" $
+          prettyIO yearExp11
+      , goldenVsString "Pretty evaluated year explanation" "test/data/year11_evaluated.golden" $
+          prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExp11)
+      ]
     , testGroup "Weekday"
       [ goldenVsString "Pretty abstract weekday explanation" "test/data/week_abstract.golden" $
           prettyIO weekExpl
@@ -251,6 +257,7 @@ explanationTests =
   (centuryExpl, centuryVar) = runState findCenturyAnchor emptyExpl
   (yearExpl, yearVar) = runState (findYearAnchor centuryVar) emptyExpl
   (yearExpl4, _) = runState (findYearAnchorDiv4 centuryVar) emptyExpl
+  (yearExp11, _) = runState (findYearAnchorOdd11 centuryVar) emptyExpl
   (weekExpl, _) = runState (findWeekday yearVar) emptyExpl
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a) => a -> IO BS.ByteString

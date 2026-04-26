@@ -1,0 +1,8 @@
+Find the year anchor. Starting with year Y:
+ - note the century anchor A
+ - take the last two digits T = Y % 100
+ - if odd, add eleven T = T + (T % 2)*11
+ - then divide by two T = T / 2
+ - if odd, add eleven T = T + (T % 2)*11
+ - subtract from seven T = 7 - T
+ - add the century anchor to get W = A + T

@@ -10,6 +10,9 @@ module Data.Time.Doomsday (
   -- ** Simpler formula with division by 4
   doomsdayExplanationDiv4,
   findYearAnchorDiv4,
+  -- ** Odd + 11 method
+  doomsdayExplanationOdd11,
+  findYearAnchorOdd11,
 
   -- * How to create an explanation
   module Expression,
@@ -88,6 +91,10 @@ doomsdayExplanationDiv4 :: Explanation
 doomsdayExplanationDiv4 = explanation $ findCenturyAnchor >>= findYearAnchorDiv4 >>= findWeekday
 
 
+-- | The Conways method for computing the years doomsday is equivalent
+-- to this simpler formula, which requires dividing by both 4 and 7.
+--
+-- See https://en.wikipedia.org/wiki/Doomsday_rule#Why_it_works
 findYearAnchorDiv4 :: Expression -> State Explanation Expression
 findYearAnchorDiv4 centuryAnchor =
   part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
@@ -96,3 +103,21 @@ findYearAnchorDiv4 centuryAnchor =
     i <- step "the resulting increment is" $ 'I' := t + t `div` 4
     step "add the century anchor to get" $ 'W' := a + i
 
+
+doomsdayExplanationOdd11 :: Explanation
+doomsdayExplanationOdd11 = explanation $ findCenturyAnchor >>= findYearAnchorOdd11 >>= findWeekday
+
+-- | The odd plus 11 method by Chamberlain Fong and Michael K. Walters.
+--
+-- See _Methods for Accelerating Conway's Doomsday Algorithm_
+-- https://doi.org/10.48550/arXiv.1010.0765
+findYearAnchorOdd11 :: Expression -> State Explanation Expression
+findYearAnchorOdd11 centuryAnchor =
+  part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
+    a <- note "note the century anchor" centuryAnchor
+    t1 <- stepI "take the last two digits" $ 'T' := y `mod` 100
+    t2 <- stepI "if odd, add eleven" $ 'T' := t1 + (t1 `mod` 2) * 11
+    t3 <- stepI "then divide by two" $ 'T' := t2 `div` 2
+    t4 <- stepI "if odd, add eleven" $ 'T' := t3 + (t3 `mod` 2) * 11
+    t5 <- step "subtract from seven" $ 'T' := 7 - t4
+    step "add the century anchor to get" $ 'W' := a + t5
