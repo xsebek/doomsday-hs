@@ -1,11 +1,11 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RequiredTypeArguments #-}
 
 module Main (main) where
 
 import Data.List (intercalate)
+import Data.Proxy (Proxy (..))
 import Data.Time.Doomsday
 import Options.Applicative
 import REPL
@@ -85,7 +85,7 @@ trainParams =
       , short 'r'
       , metavar "RANGE"
       , value Year
-      , help ("Pick random dates from given time range " <> showValues DateRange)
+      , help ("Pick random dates from given time range " <> showValues (Proxy @DateRange))
       , showDefault
       ]
 
@@ -108,10 +108,10 @@ formulaOption =
     , short 'f'
     , metavar "FORMULA"
     , value Conways
-    , help ("Use Doomsday formula " <> showValues Formula)
+    , help ("Use Doomsday formula " <> showValues (Proxy @Formula))
     , showDefault
     ]
 
 
-showValues :: forall a -> (Bounded a, Enum a, Show a) => String
-showValues a = "[" <> intercalate "|" (show @a <$> [minBound .. maxBound]) <> "]"
+showValues :: forall a. (Bounded a, Enum a, Show a) => Proxy a -> String
+showValues _ = "[" <> intercalate "|" (show @a <$> [minBound .. maxBound]) <> "]"
