@@ -1,0 +1,6 @@
+Find the year anchor. Starting with year 1826:
+ - first take the century digits C = Y / 100 = 1826 / 100 = 18
+ - and remainder dividing by four C = C % 4 = 18 % 4 = 2
+ - then take the last two digits D = Y % 100 = 1826 % 100 = 26
+ - and remainder dividing by four E = D % 4 = 26 % 4 = 2
+ - add together to get W = 5*((C + E) - 1) + 10*D = 5*((2 + 2) - 1) + 10*26 = 275 ≡ Tuesday

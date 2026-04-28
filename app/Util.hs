@@ -45,7 +45,7 @@ randomDate dr (Date ty tm td) = do
   randomDateR drMin r v = if dr >= drMin then fromInteger <$> R.applyAtomicGen (R.uniformR r) R.globalStdGen else pure v
 
 
-data Formula = Conways | Div4 | Odd11
+data Formula = Conways | Div4 | Odd11 | Nakai
   deriving (Bounded, Enum, Eq, Ord, Read, Show)
 
 
@@ -54,3 +54,4 @@ explanationForm = \case
   Conways -> doomsdayExplanation
   Div4 -> doomsdayExplanationDiv4
   Odd11 -> doomsdayExplanationOdd11
+  Nakai -> doomsdayExplanationNakai

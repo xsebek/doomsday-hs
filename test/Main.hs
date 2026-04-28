@@ -178,6 +178,7 @@ expressionTests =
     , expression "(4 + 5) % 7" ((4 + 5) `mod` 7) 2
     , expressionWithVars [('I', 5)] "Tuesday + I" (EDay Tuesday + EVar 'I') 7
     -- TODO: (2 + 2) + 2/4
+    -- TODO: (4 + 6) - 1
     ]
  where
   expressionWithVars v pret e res = testCase pret $ do
@@ -228,6 +229,14 @@ explanationTests =
         , goldenVsString "Pretty evaluated year explanation" "test/data/year11_evaluated.golden" $
             prettyIO (evalExplanationWith [('A', EDay Tuesday)] yearExp11)
         ]
+    , testGroup "Year with Nakai's formula" $
+        [ goldenVsString "Pretty abstract year explanation" "test/data/yearNakai_abstract.golden" $
+            prettyIO yearExpNak
+        , goldenVsString "Pretty evaluated year explanation" "test/data/yearNakai_evaluated.golden" $ do
+            let expNak = evalExplanation (Date 1826 17 09) yearExpNak
+            expNak.result @?= Just Tuesday
+            prettyIO expNak
+        ]
     , testGroup "Weekday" $
         [ goldenVsString "Pretty abstract weekday explanation" "test/data/week_abstract.golden" $
             prettyIO weekExpl
@@ -252,6 +261,7 @@ explanationTests =
         [ sameDayAsTime "Conways" doomsdayExplanation
         , sameDayAsTime "Div 4" doomsdayExplanationDiv4
         , sameDayAsTime "Odd 11" doomsdayExplanationOdd11
+        , sameDayAsTime "Nakai" doomsdayExplanationNakai
         ]
     ]
  where
@@ -261,6 +271,7 @@ explanationTests =
   (yearExpl, yearVar) = runState (findYearAnchor centuryVar) emptyExpl
   (yearExpl4, _) = runState (findYearAnchorDiv4 centuryVar) emptyExpl
   (yearExp11, _) = runState (findYearAnchorOdd11 centuryVar) emptyExpl
+  (yearExpNak, _) = runState findYearAnchorNakai emptyExpl
   (weekExpl, _) = runState (findWeekday yearVar) emptyExpl
   evalExplanationWith vars = snd . flip runState vars . evalExplanationS d
   prettyIO :: (Pretty a) => a -> IO BS.ByteString

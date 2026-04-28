@@ -17,6 +17,10 @@ module Data.Time.Doomsday (
   doomsdayExplanationOdd11,
   findYearAnchorOdd11,
 
+  -- ** Nakai's formula
+  doomsdayExplanationNakai,
+  findYearAnchorNakai,
+
   -- * How to create an explanation
   module Expression,
   module Equation,
@@ -129,3 +133,21 @@ findYearAnchorOdd11 centuryAnchor =
     t4 <- stepI "if odd, add eleven" $ 'T' := t3 + (t3 `mod` 2) * 11
     t5 <- step "subtract from seven" $ 'T' := 7 - t4
     step "add the century anchor to get" $ 'W' := a + t5
+
+
+doomsdayExplanationNakai :: Explanation
+doomsdayExplanationNakai = explanation $ findYearAnchorNakai >>= findWeekday
+
+
+-- | Simpler formula for year anchor by Hirofumi Nakai.
+--
+-- See _A Simple Formula for Doomsday_
+-- https://doi.org/10.1007/s00283-022-10229-3
+findYearAnchorNakai :: State Explanation Expression
+findYearAnchorNakai =
+  part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
+    c1 <- stepI "first take the century digits" $ 'C' := y `div` 100
+    c2 <- stepI "and remainder dividing by four" $ 'C' := c1 `mod` 4
+    d1 <- stepI "then take the last two digits" $ 'D' := y `mod` 100
+    d2 <- stepI "and remainder dividing by four" $ 'E' := d1 `mod` 4
+    step "add together to get" $ 'W' := 5 * (c2 + d2 - 1) + 10 * d1
