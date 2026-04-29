@@ -31,8 +31,8 @@ data QueryData = Q
   }
 
 
-trainingREPL :: DateRange -> IO ()
-trainingREPL r = do
+trainingREPL :: Formula -> DateRange -> IO ()
+trainingREPL f r = do
   t <- fromTime <$> getToday
   d <- loadData
   flip evalStateT d . runInputT settings $ loop t
@@ -41,7 +41,7 @@ trainingREPL r = do
   loop today = do
     time <- liftIO getCurrentTime
     date <- liftIO $ randomDate r today
-    let expl = evalExplanation date doomsdayExplanation{relativeTo = Just $ date `compare` today}
+    let expl = evalExplanation date (explanationForm f){relativeTo = Just $ date `compare` today}
     let c = maybe (error "expected evaluated explanation") toTimeD expl.result
     continue <- run $ Q date c time expl
     outputStrLn ""

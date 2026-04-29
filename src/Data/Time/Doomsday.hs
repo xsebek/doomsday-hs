@@ -1,20 +1,45 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Data.Time.Doomsday (
+  -- * Conway's Doomsday algorithm
   doomsdayExplanation,
   findCenturyAnchor,
   findYearAnchor,
   findWeekday,
+
+  -- * Custom algorithm versions
+
+  -- ** Simpler formula with division by 4
+  doomsdayExplanationDiv4,
+  findYearAnchorDiv4,
+
+  -- ** Odd + 11 method
+  doomsdayExplanationOdd11,
+  findYearAnchorOdd11,
+
+  -- ** Nakai's formula
+  doomsdayExplanationNakai,
+  findYearAnchorNakai,
+
+  -- * How to create an explanation
+  module Expression,
+  module Equation,
+  module Explanation,
+
+  -- ** Mnemonics
+  module Mnemonic,
+
+  -- ** Calendar
   module D,
   module Y,
   module M,
   module W,
-  module Expression,
-  module Equation,
-  module Explanation,
-  module Mnemonic,
-  module Pretty,
+
+  -- ** Simple state
   State (..),
+
+  -- ** Simple pretty printing
+  module Pretty,
 ) where
 
 import Data.Time.Doomsday.Date as D
@@ -28,6 +53,10 @@ import Data.Time.Doomsday.State.Simple (State (..))
 import Data.Time.Doomsday.String.Pretty as Pretty
 import Data.Time.Doomsday.Year as Y
 
+
+---------------------------------------------------------------------
+-- Original Conway's algorithm
+---------------------------------------------------------------------
 
 doomsdayExplanation :: Explanation
 doomsdayExplanation = explanation $ do
@@ -50,7 +79,9 @@ findYearAnchor centuryAnchor =
   part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
     a <- note "note the century anchor" centuryAnchor
     t <- stepI "take the last two digits" $ 'T' := y `mod` 100
-    i <- step "the resulting increment is" $ 'I' := t + t `div` 4
+    d <- stepI "divide them by twelve" $ 'D' := t `div` 12
+    r <- stepI "and take the reminder" $ 'R' := t `mod` 12
+    i <- step "the resulting increment is" $ 'I' := d + r + (r `div` 4)
     step "add the century anchor to get" $ 'W' := a + i
 
 
@@ -61,3 +92,62 @@ findWeekday yearAnchor =
     o <- noteI "this months doomsday is" doom
     i <- step "the resulting increment is" $ 'I' := date - o
     step "add the year anchor to get" $ 'R' := w + i
+
+
+---------------------------------------------------------------------
+-- Custom
+---------------------------------------------------------------------
+
+doomsdayExplanationDiv4 :: Explanation
+doomsdayExplanationDiv4 = explanation $ findCenturyAnchor >>= findYearAnchorDiv4 >>= findWeekday
+
+
+-- | The Conways method for computing the years doomsday is equivalent
+-- to this simpler formula, which requires dividing by both 4 and 7.
+--
+-- See https://en.wikipedia.org/wiki/Doomsday_rule#Why_it_works
+findYearAnchorDiv4 :: Expression -> State Explanation Expression
+findYearAnchorDiv4 centuryAnchor =
+  part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
+    a <- note "note the century anchor" centuryAnchor
+    t <- stepI "take the last two digits" $ 'T' := y `mod` 100
+    i <- step "the resulting increment is" $ 'I' := t + t `div` 4
+    step "add the century anchor to get" $ 'W' := a + i
+
+
+doomsdayExplanationOdd11 :: Explanation
+doomsdayExplanationOdd11 = explanation $ findCenturyAnchor >>= findYearAnchorOdd11 >>= findWeekday
+
+
+-- | The odd plus 11 method by Chamberlain Fong and Michael K. Walters.
+--
+-- See _Methods for Accelerating Conway's Doomsday Algorithm_
+-- https://doi.org/10.48550/arXiv.1010.0765
+findYearAnchorOdd11 :: Expression -> State Explanation Expression
+findYearAnchorOdd11 centuryAnchor =
+  part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
+    a <- note "note the century anchor" centuryAnchor
+    t1 <- stepI "take the last two digits" $ 'T' := y `mod` 100
+    t2 <- stepI "if odd, add eleven" $ 'T' := t1 + (t1 `mod` 2) * 11
+    t3 <- stepI "then divide by two" $ 'T' := t2 `div` 2
+    t4 <- stepI "if odd, add eleven" $ 'T' := t3 + (t3 `mod` 2) * 11
+    t5 <- step "subtract from seven" $ 'T' := 7 - t4
+    step "add the century anchor to get" $ 'W' := a + t5
+
+
+doomsdayExplanationNakai :: Explanation
+doomsdayExplanationNakai = explanation $ findYearAnchorNakai >>= findWeekday
+
+
+-- | Simpler formula for year anchor by Hirofumi Nakai.
+--
+-- See _A Simple Formula for Doomsday_
+-- https://doi.org/10.1007/s00283-022-10229-3
+findYearAnchorNakai :: State Explanation Expression
+findYearAnchorNakai =
+  part "Find the year anchor." $ startingWithYear 'Y' $ \y -> do
+    c1 <- stepI "first take the century digits" $ 'C' := y `div` 100
+    c2 <- stepI "and remainder dividing by four" $ 'C' := c1 `mod` 4
+    d1 <- stepI "then take the last two digits" $ 'D' := y `mod` 100
+    d2 <- stepI "and remainder dividing by four" $ 'E' := d1 `mod` 4
+    step "add together to get" $ 'W' := 5 * (c2 + d2 - 1) + 10 * d1

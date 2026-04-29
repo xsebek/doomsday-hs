@@ -1,0 +1,8 @@
+Find the year anchor. Starting with year 2026:
+ - note the century anchor A = Tuesday
+ - take the last two digits T = Y % 100 = 2026 % 100 = 26
+ - if odd, add eleven T = T + (T % 2)*11 = 26 + (26 % 2)*11 = 26
+ - then divide by two T = T / 2 = 26 / 2 = 13
+ - if odd, add eleven T = T + (T % 2)*11 = 13 + (13 % 2)*11 = 24
+ - subtract from seven T = 7 - T = 7 - 24 = -17 ≡ Thursday
+ - add the century anchor to get W = A + T = Tuesday + Thursday = 6 ≡ Saturday
