@@ -259,7 +259,8 @@ explanationTests =
         , goldenVsString "Partly verbose abstract explanation" "test/data/verbose_abstract.golden" $
             prettyIO (formatVerbose (Just 2) doomsdayExplanation)
         , goldenVsString "Partly verbose evaluated explanation" "test/data/verbose_evaluated.golden" $
-            prettyIO . formatVerbose (Just 1) $ (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
+            prettyIO . formatVerbose (Just 1) $
+              (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
         ]
     , testGroup "Check explanation result against Time" $
         [ sameDayAsTime "Conways" doomsdayExplanation
