@@ -256,6 +256,10 @@ explanationTests =
             prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just LT, response = Just Friday}
         , goldenVsString "Terminal evaluated whole correct explanation" "test/data/terminal_wrong.golden" $
             prettyTermIO (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
+        , goldenVsString "Partly verbose abstract explanation" "test/data/verbose_abstract.golden" $
+            prettyIO (formatVerbose (Just 2) doomsdayExplanation)
+        , goldenVsString "Partly verbose evaluated explanation" "test/data/verbose_evaluated.golden" $
+            prettyIO . formatVerbose (Just 1) $ (evalExplanation d doomsdayExplanation){relativeTo = Just GT, response = Just Monday}
         ]
     , testGroup "Check explanation result against Time" $
         [ sameDayAsTime "Conways" doomsdayExplanation
