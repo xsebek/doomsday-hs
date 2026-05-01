@@ -21,6 +21,9 @@ module Data.Time.Doomsday.Explanation (
   -- * Evaluate explanation
   evalExplanation,
   evalExplanationS,
+
+  -- * Pretty-print explanation
+  formatVerbose,
 ) where
 
 import Data.Time.Doomsday.Date
@@ -74,20 +77,26 @@ data VarType = VDay | VInt
 ---------------------------------------------------------------------
 
 instance Pretty Explanation where
-  format expl = FmtAnn Note (FmtParagraphs $ map format expl.parts) <> res
-   where
-    res = case (expl.relativeTo, expl.result) of
-      (Just o, Just r) ->
-        let is = tense o
-            resWeekday = FmtAnn Result (format r)
-         in guess <+> "The weekday" <+> is <+> resWeekday <> "."
-      _ -> mempty
-    guess = case (,) <$> expl.result <*> expl.response of
-      Nothing -> ""
-      Just (r, d) ->
-        if r == d
-          then FmtAnn Success "Correct!"
-          else FmtAnn Failure (format d) <+> "is wrong!"
+  format = formatVerbose Nothing
+
+
+formatVerbose :: Maybe Int -> Explanation -> Format
+formatVerbose v expl = FmtAnn Note partsExplanation <> res
+ where
+  partsExplanation = FmtParagraphs . verbose $ map format expl.parts
+  verbose = maybe id (\l -> reverse . take l . reverse) v
+  res = case (expl.relativeTo, expl.result) of
+    (Just o, Just r) ->
+      let is = tense o
+          resWeekday = FmtAnn Result (format r)
+       in guess <+> "The weekday" <+> is <+> resWeekday <> "."
+    _ -> mempty
+  guess = case (,) <$> expl.result <*> expl.response of
+    Nothing -> ""
+    Just (r, d) ->
+      if r == d
+        then FmtAnn Success "Correct!"
+        else FmtAnn Failure (format d) <+> "is wrong!"
 
 
 instance Pretty Part where
