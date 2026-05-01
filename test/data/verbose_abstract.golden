@@ -1,0 +1,13 @@
+Find the year anchor. Starting with year Y:
+ - note the century anchor A
+ - take the last two digits T = Y % 100
+ - divide them by twelve D = T / 12
+ - and take the reminder R = T % 12
+ - the resulting increment is I = (D + R) + R/4
+ - add the century anchor to get W = A + I
+
+Find the weekday. Starting with date D:
+ - note the year anchor W
+ - this months doomsday is O
+ - the resulting increment is I = D - O
+ - add the year anchor to get R = W + I

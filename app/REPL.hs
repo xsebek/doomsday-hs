@@ -99,9 +99,7 @@ explainUsage input e = do
 -- | Show an explanation:
 -- "" shows just the answer, "?" shows the last part and "???" shows the whole algorithm
 verboseExpl :: [Char] -> Explanation -> Format
-verboseExpl q expl = case format expl of
-  FmtParagraphs ps -> FmtParagraphs . reverse . take (1 + length q) $ reverse ps
-  f -> f
+verboseExpl q = formatVerbose (Just $ length q)
 
 
 outputPrettyLn :: (MonadIO m, Pretty a) => a -> InputT m ()
